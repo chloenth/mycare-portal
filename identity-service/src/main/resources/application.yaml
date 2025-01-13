@@ -1,0 +1,16 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /identity
+
+spring:
+  datasource:
+    url: ${DBMS_CONNECTION:jdbc:postgresql://localhost:5432/mycare_identity}
+    driverClassName: ${DBSM_DRIVER:org.postgresql.Driver}
+    username: ${DBMS_USERNAME:postgres}
+    password: ${DBMS_PASSWORD:root}
+  jpa:
+    hibernate:
+      dialect: ${Dialect:org.hibernate.dialect.PostgreSQLDialect}
+      ddl-auto: update
+    show-sql: true
