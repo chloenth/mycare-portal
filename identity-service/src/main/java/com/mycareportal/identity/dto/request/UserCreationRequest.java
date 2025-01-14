@@ -1,6 +1,7 @@
 package com.mycareportal.identity.dto.request;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import com.mycareportal.identity.validator.DobConstraint;
 
@@ -33,4 +34,5 @@ public class UserCreationRequest {
 	String gender;
 	String address;
 	String phoneNumber;
+	List<String> roles;
 }

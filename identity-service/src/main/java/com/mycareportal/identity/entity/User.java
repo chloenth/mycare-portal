@@ -31,7 +31,7 @@ public class User {
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	String id;
-	
+
 	@Column(unique = true)
 	String username;
 	String password;
