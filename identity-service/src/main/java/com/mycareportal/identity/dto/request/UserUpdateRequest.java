@@ -1,6 +1,7 @@
 package com.mycareportal.identity.dto.request;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import com.mycareportal.identity.validator.DobConstraint;
 
@@ -18,10 +19,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserCreationRequest {
-	@Size(min = 4, message = "INVALID_USERNAME")
-	String username;
-
+public class UserUpdateRequest {
 	@Size(min = 6, message = "INVALID_PASSWORD")
 	String password;
 
@@ -33,4 +31,5 @@ public class UserCreationRequest {
 	String gender;
 	String address;
 	String phoneNumber;
+	List<String> roles;
 }
