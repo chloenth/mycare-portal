@@ -2,16 +2,13 @@ package com.mycareportal.identity.service;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.mycareportal.identity.constant.PredefinedRole;
 import com.mycareportal.identity.dto.request.UserCreationRequest;
 import com.mycareportal.identity.dto.request.UserUpdateRequest;
 import com.mycareportal.identity.dto.response.UserResponse;
-import com.mycareportal.identity.entity.Role;
 import com.mycareportal.identity.entity.User;
 import com.mycareportal.identity.exception.AppException;
 import com.mycareportal.identity.exception.ErrorCode;
@@ -44,9 +41,8 @@ public class UserService {
 		// create new user if not existed
 		User user = userMapper.toUser(request);
 
-		Set<Role> roles = new HashSet<>();
-		roleRepository.findById(PredefinedRole.PATIENT_ROLE).ifPresent(roles::add);
-		user.setRoles(roles);
+		var roles = roleRepository.findAllById(request.getRoles());
+		user.setRoles(new HashSet<>(roles));
 
 		user = userRepository.save(user);
 
@@ -67,8 +63,11 @@ public class UserService {
 
 		return userMapper.toUserResponse(userRepository.save(user));
 	}
-
+	
 	public void deleteUser(String userId) {
+		if (!userRepository.existsById(userId)) {
+			throw new AppException(ErrorCode.USER_NOT_FOUND);
+		}
 		userRepository.deleteById(userId);
 	}
 }
