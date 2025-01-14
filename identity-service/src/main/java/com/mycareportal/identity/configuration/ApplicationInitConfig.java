@@ -32,29 +32,35 @@ public class ApplicationInitConfig {
 
 	@NonFinal
 	static final String ADMIN_PASSWORD = "admin";
-	
+
 	@Bean
 	ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository) {
 		log.info("Initializing application.....");
 		return args -> {
-			if (userRepository.findByUsername(null).isEmpty()) {
-				roleRepository
-						.save(Role.builder().name(PredefinedRole.DOCTOR_ROLE).desscription("Doctor role").build());
-				roleRepository
-						.save(Role.builder().name(PredefinedRole.PATIENT_ROLE).desscription("Patient role").build());
+			// create doctor, patient, admin role if not exists
+			createRoleIfNotExists(roleRepository, PredefinedRole.DOCTOR_ROLE, "Doctor role");
+			createRoleIfNotExists(roleRepository, PredefinedRole.PATIENT_ROLE, "Patient role");
+			createRoleIfNotExists(roleRepository, PredefinedRole.ADMIN_ROLE, "Admin role");
 
-				Role adminRole = roleRepository
-						.save(Role.builder().name(PredefinedRole.ADMIN_ROLE).desscription("Admin role").build());
+			// create admin account if not exists
+			if (userRepository.findByUsername(ADMIN_USERNAME).isEmpty()) {
 
 				Set<Role> roles = new HashSet<>();
-				roles.add(adminRole);
+				roleRepository.findById(PredefinedRole.ADMIN_ROLE).ifPresent(roles::add);
 
-				User user = User.builder().username(ADMIN_USERNAME)
-						.password(passwordEncoder.encode(ADMIN_PASSWORD)).roles(roles).build();
+				User user = User.builder().username(ADMIN_USERNAME).password(passwordEncoder.encode(ADMIN_PASSWORD))
+						.roles(roles).build();
 				userRepository.save(user);
 				log.warn("admin user has been created with default password: admin, please change it");
 			}
 			log.info("Application initialization completed .....");
 		};
+
+	}
+
+	private void createRoleIfNotExists(RoleRepository roleRepository, String roleName, String description) {
+		if (roleRepository.findById(roleName).isEmpty()) {
+			roleRepository.save(Role.builder().name(roleName).desscription(description).build());
+		}
 	}
 }
