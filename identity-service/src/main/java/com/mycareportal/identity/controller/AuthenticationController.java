@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.mycareportal.identity.dto.ApiResponse;
 import com.mycareportal.identity.dto.request.AuthenticationRequest;
+import com.mycareportal.identity.dto.request.IntrospectRequest;
 import com.mycareportal.identity.dto.response.AuthenticationResponse;
+import com.mycareportal.identity.dto.response.IntrospectResponse;
 import com.mycareportal.identity.service.AuthenticationService;
 
 import lombok.AccessLevel;
@@ -22,8 +24,13 @@ public class AuthenticationController {
 	AuthenticationService authenticationService;
 
 	@PostMapping("/token")
-	ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
+	ApiResponse<AuthenticationResponse> authenticateUser(@RequestBody AuthenticationRequest request) {
 		return ApiResponse.<AuthenticationResponse>builder().result(authenticationService.authenticate(request))
 				.build();
+	}
+	
+	@PostMapping("/introspect")
+	ApiResponse<IntrospectResponse> introspectToken(@RequestBody IntrospectRequest request) {
+		return ApiResponse.<IntrospectResponse>builder().result(authenticationService.introspect(request)).build();
 	}
 }
