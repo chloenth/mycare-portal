@@ -19,7 +19,20 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalExceptionHandler {
 
 	private static final String MIN_ATTRIBUTE = "min";
+	
+	// handle general runtime exception - UNCATEGORIZED_EXCEPTION
+	@ExceptionHandler(value = Exception.class)
+	ResponseEntity<ApiResponse<String>> handlingRuntimeException(RuntimeException exception) {
+		log.error("Exception: ", exception);
+		ApiResponse<String> apiResponse = new ApiResponse<>();
 
+		apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
+		apiResponse.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
+
+		return ResponseEntity.badRequest().body(apiResponse);
+	}
+	
+	// handle App Exception - custom exception
 	@ExceptionHandler(value = AppException.class)
 	ResponseEntity<ApiResponse<String>> handlingAppException(AppException exception) {
 		ErrorCode errorCode = exception.getErrorCode();
@@ -30,7 +43,8 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
 	}
-
+	
+	// handle Validation Error
 	@ExceptionHandler(value = MethodArgumentNotValidException.class)
 	ResponseEntity<ApiResponse<String>> handlingValidation(MethodArgumentNotValidException exception) {
 		FieldError fieldError = exception.getFieldError();

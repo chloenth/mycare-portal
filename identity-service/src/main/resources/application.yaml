@@ -14,3 +14,7 @@ spring:
       dialect: ${Dialect:org.hibernate.dialect.PostgreSQLDialect}
       ddl-auto: update
     show-sql: true
+
+jwt: 
+  signerKey: "i5Xix4nevtaJQF7BF9VxQ5KKZLIVTyJwUBf5NKR4/FOFXAbn+3u5icTgnFG/QN7W"
+  valid-duration: 3600 # in second
