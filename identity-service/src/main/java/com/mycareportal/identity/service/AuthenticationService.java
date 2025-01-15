@@ -1,5 +1,6 @@
 package com.mycareportal.identity.service;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -12,7 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import com.mycareportal.identity.dto.request.AuthenticationRequest;
+import com.mycareportal.identity.dto.request.IntrospectRequest;
 import com.mycareportal.identity.dto.response.AuthenticationResponse;
+import com.mycareportal.identity.dto.response.IntrospectResponse;
 import com.mycareportal.identity.entity.User;
 import com.mycareportal.identity.exception.AppException;
 import com.mycareportal.identity.exception.ErrorCode;
@@ -20,7 +23,9 @@ import com.mycareportal.identity.repository.UserRepository;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
@@ -63,6 +68,19 @@ public class AuthenticationService {
 		return AuthenticationResponse.builder().token(token).build();
 	}
 
+	// introspect token
+	public IntrospectResponse introspect(IntrospectRequest request) {
+		String token = request.getToken();
+		boolean isValid = false;
+		try {
+			isValid = verifyToken(token);
+		} catch (ParseException | JOSEException e) {
+			isValid = false;
+		}
+
+		return IntrospectResponse.builder().valid(isValid).build();
+	}
+
 	// to generate token from user info
 	private String generateToken(User user) {
 		JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
@@ -82,6 +100,17 @@ public class AuthenticationService {
 		}
 
 		return signedJWT.serialize();
+	}
+
+	// verify token
+	private boolean verifyToken(String token) throws ParseException, JOSEException {
+		JWSVerifier verifier = new MACVerifier(signerKey.getBytes());
+		SignedJWT signedJWT = SignedJWT.parse(token);
+
+		Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+		boolean isVerified = signedJWT.verify(verifier);
+
+		return isVerified && expiryTime.after(new Date());
 	}
 
 	// build scope for claimsSet from user roles
