@@ -30,12 +30,13 @@ public class UserService {
 	RoleRepository roleRepository;
 	UserMapper userMapper;
 	PasswordEncoder passwordEncoder;
-
+	
+	// create new user
 	public UserResponse createUser(UserCreationRequest request) {
 		// check if username is existed
 		boolean usernameExists = userRepository.existsByUsername(request.getUsername());
 		if (usernameExists) {
-		    throw new AppException(ErrorCode.USER_EXISTED);
+		    throw new AppException(ErrorCode.USER_ALREADY_EXISTED);
 		}
 		
 		// create new user if not existed
@@ -43,16 +44,19 @@ public class UserService {
 
 		var roles = roleRepository.findAllById(request.getRoles());
 		user.setRoles(new HashSet<>(roles));
+		user.setPassword(passwordEncoder.encode(request.getPassword()));
 
 		user = userRepository.save(user);
 
 		return userMapper.toUserResponse(user);
 	}
-
+	
+	// get all users
 	public List<UserResponse> getUsers() {
 		return userRepository.findAll().stream().map(userMapper::toUserResponse).toList();
 	}
-
+	
+	// update a user
 	public UserResponse updateUser(String id, UserUpdateRequest request) {
 		User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("No user found"));
 		userMapper.updateUser(user, request);
@@ -64,6 +68,7 @@ public class UserService {
 		return userMapper.toUserResponse(userRepository.save(user));
 	}
 	
+	// delete a user
 	public void deleteUser(String userId) {
 		if (!userRepository.existsById(userId)) {
 			throw new AppException(ErrorCode.USER_NOT_FOUND);

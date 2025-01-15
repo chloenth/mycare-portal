@@ -9,11 +9,12 @@ import lombok.Getter;
 public enum ErrorCode {
 	UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR),
 	INVALID_KEY(1001, "Uncategorized error", HttpStatus.BAD_REQUEST),
-	USER_EXISTED(1002, "User existed", HttpStatus.BAD_REQUEST),
+	USER_ALREADY_EXISTED(1002, "User already existed", HttpStatus.BAD_REQUEST),
 	USER_NOT_FOUND(1003, "User not found", HttpStatus.NOT_FOUND),
 	INVALID_USERNAME(1004, "Username must be at least {min} characters", HttpStatus.BAD_REQUEST),
 	INVALID_PASSWORD(1005, "Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
-	EMAIL_TAKEN(1006, "This email address has already been registered", HttpStatus.BAD_REQUEST),
+	EMAIL_ALREADY_TAKEN(1006, "Email has already been registered", HttpStatus.BAD_REQUEST),
+	UNAUTHENTICATED(1007, "Unauthenticated", HttpStatus.UNAUTHORIZED),
 	;
 
 	ErrorCode(int code, String message, HttpStatusCode statusCode) {
