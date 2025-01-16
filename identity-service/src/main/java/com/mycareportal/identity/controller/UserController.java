@@ -41,6 +41,11 @@ public class UserController {
 		return ApiResponse.<List<UserResponse>>builder().result(userService.getUsers()).build();
 	}
 
+	@GetMapping("/my-info")
+	ApiResponse<UserResponse> getMyInfo() {
+		return ApiResponse.<UserResponse>builder().result(userService.getMyInfo()).build();
+	}
+
 	@PutMapping("/{userId}")
 	ApiResponse<UserResponse> updateUser(@PathVariable String userId, @RequestBody @Valid UserUpdateRequest request) {
 		return ApiResponse.<UserResponse>builder().result(userService.updateUser(userId, request)).build();
