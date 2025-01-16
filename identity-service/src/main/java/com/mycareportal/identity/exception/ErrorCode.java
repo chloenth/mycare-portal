@@ -15,8 +15,8 @@ public enum ErrorCode {
 	INVALID_PASSWORD(1005, "Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
 	EMAIL_ALREADY_TAKEN(1006, "Email has already been registered", HttpStatus.BAD_REQUEST),
 	UNAUTHENTICATED(1007, "Unauthenticated", HttpStatus.UNAUTHORIZED),
-	INVALID_REFRESH_TOKEN(1008, "Invalid refresh token. Please log in again", HttpStatus.UNAUTHORIZED),
-	;
+	UNAUTHORIZED(1008, "You do not have permission", HttpStatus.FORBIDDEN),
+	INVALID_REFRESH_TOKEN(1009, "Invalid refresh token. Please log in again", HttpStatus.BAD_REQUEST),;
 
 	ErrorCode(int code, String message, HttpStatusCode statusCode) {
 		this.code = code;

@@ -3,6 +3,8 @@ package com.mycareportal.identity.service;
 import java.util.HashSet;
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -30,15 +32,15 @@ public class UserService {
 	RoleRepository roleRepository;
 	UserMapper userMapper;
 	PasswordEncoder passwordEncoder;
-	
+
 	// create new user
 	public UserResponse createUser(UserCreationRequest request) {
 		// check if username is existed
 		boolean usernameExists = userRepository.existsByUsername(request.getUsername());
 		if (usernameExists) {
-		    throw new AppException(ErrorCode.USER_ALREADY_EXISTED);
+			throw new AppException(ErrorCode.USER_ALREADY_EXISTED);
 		}
-		
+
 		// create new user if not existed
 		User user = userMapper.toUser(request);
 
@@ -50,15 +52,21 @@ public class UserService {
 
 		return userMapper.toUserResponse(user);
 	}
-	
+
 	// get all users
+	@PreAuthorize("hasRole('ADMIN')")
 	public List<UserResponse> getUsers() {
+		var authentication = SecurityContextHolder.getContext().getAuthentication();
+		log.info("authentication: {}", authentication);
+		log.info("name: {}", authentication.getName());
+		log.info("authorities: {}", authentication.getAuthorities());
+
 		return userRepository.findAll().stream().map(userMapper::toUserResponse).toList();
 	}
-	
+
 	// update a user
 	public UserResponse updateUser(String id, UserUpdateRequest request) {
-		User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("No user found"));
+		User user = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 		userMapper.updateUser(user, request);
 		user.setPassword(passwordEncoder.encode(request.getPassword()));
 
@@ -67,8 +75,9 @@ public class UserService {
 
 		return userMapper.toUserResponse(userRepository.save(user));
 	}
-	
+
 	// delete a user
+	@PreAuthorize("hasRole('ADMIN')")
 	public void deleteUser(String userId) {
 		if (!userRepository.existsById(userId)) {
 			throw new AppException(ErrorCode.USER_NOT_FOUND);

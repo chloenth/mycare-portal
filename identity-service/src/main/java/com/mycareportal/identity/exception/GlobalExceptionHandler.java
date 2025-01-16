@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -19,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalExceptionHandler {
 
 	private static final String MIN_ATTRIBUTE = "min";
-	
+
 	// handle general runtime exception - UNCATEGORIZED_EXCEPTION
 	@ExceptionHandler(value = Exception.class)
 	ResponseEntity<ApiResponse<String>> handlingRuntimeException(RuntimeException exception) {
@@ -31,7 +32,7 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity.badRequest().body(apiResponse);
 	}
-	
+
 	// handle App Exception - custom exception
 	@ExceptionHandler(value = AppException.class)
 	ResponseEntity<ApiResponse<String>> handlingAppException(AppException exception) {
@@ -43,7 +44,15 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
 	}
-	
+
+	@ExceptionHandler(value = AccessDeniedException.class)
+	ResponseEntity<ApiResponse<String>> handlingAccessDeniedException(AccessDeniedException exception) {
+		ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
+
+		return ResponseEntity.status(errorCode.getStatusCode())
+				.body(ApiResponse.<String>builder().code(errorCode.getCode()).message(errorCode.getMessage()).build());
+	}
+
 	// handle Validation Error
 	@ExceptionHandler(value = MethodArgumentNotValidException.class)
 	ResponseEntity<ApiResponse<String>> handlingValidation(MethodArgumentNotValidException exception) {
