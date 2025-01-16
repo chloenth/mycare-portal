@@ -1,4 +1,4 @@
-package com.mycareportal.identity.dto.response;
+package com.mycareportal.identity.dto.request;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -8,11 +8,10 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AuthenticationResponse {
-	String accessToken;
-	String refreshToken;
+public class RefreshRequest {
+	String token;
 }

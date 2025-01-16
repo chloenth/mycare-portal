@@ -14,11 +14,14 @@ import org.springframework.util.CollectionUtils;
 
 import com.mycareportal.identity.dto.request.AuthenticationRequest;
 import com.mycareportal.identity.dto.request.IntrospectRequest;
+import com.mycareportal.identity.dto.request.RefreshRequest;
 import com.mycareportal.identity.dto.response.AuthenticationResponse;
 import com.mycareportal.identity.dto.response.IntrospectResponse;
+import com.mycareportal.identity.entity.RefreshToken;
 import com.mycareportal.identity.entity.User;
 import com.mycareportal.identity.exception.AppException;
 import com.mycareportal.identity.exception.ErrorCode;
+import com.mycareportal.identity.repository.RefreshTokenRepository;
 import com.mycareportal.identity.repository.UserRepository;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -41,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AuthenticationService {
 	UserRepository userRepository;
+	RefreshTokenRepository refreshTokenRepository;
 	PasswordEncoder passwordEncoder;
 
 	@NonFinal
@@ -50,6 +54,10 @@ public class AuthenticationService {
 	@NonFinal
 	@Value("${jwt.valid-duration}")
 	private long validDuration;
+
+	@NonFinal
+	@Value("${jwt.refresh-token.duration}")
+	private long refreshTokenDuration;
 
 	// to authenticate the username and password from user login
 	public AuthenticationResponse authenticate(AuthenticationRequest request) {
@@ -64,21 +72,45 @@ public class AuthenticationService {
 
 		// if authenticated, generate token
 		String token = generateToken(user);
+		// generate refresh token
+		String refreshToken = generateRefreshToken(user);
 
-		return AuthenticationResponse.builder().token(token).build();
+		return AuthenticationResponse.builder().accessToken(token).refreshToken(refreshToken).build();
 	}
 
-	// introspect token
+	// introspect access token
 	public IntrospectResponse introspect(IntrospectRequest request) {
 		String token = request.getToken();
 		boolean isValid = false;
 		try {
-			isValid = verifyToken(token);
+			isValid = verifyAccessToken(token);
 		} catch (ParseException | JOSEException e) {
 			isValid = false;
 		}
 
 		return IntrospectResponse.builder().valid(isValid).build();
+	}
+
+	// refresh access token
+	public AuthenticationResponse refreshToken(RefreshRequest request) {
+		var token = request.getToken();
+		
+		log.info("token: {}", token);
+
+		var existingRefreshToken = refreshTokenRepository.findByToken(token);
+		if (existingRefreshToken.isEmpty() || existingRefreshToken.get().getExpiryTime().isBefore(Instant.now())) {
+			throw new AppException(ErrorCode.INVALID_REFRESH_TOKEN);
+		}
+
+		// update refresh token with new value and valid duration
+		var refreshToken = existingRefreshToken.get();
+		refreshToken.setToken(passwordEncoder.encode(UUID.randomUUID().toString()));
+		refreshToken.setExpiryTime(Instant.now().plus(refreshTokenDuration, ChronoUnit.SECONDS));
+		refreshToken = refreshTokenRepository.save(refreshToken);
+
+		var accessToken = generateToken(refreshToken.getUser());
+
+		return AuthenticationResponse.builder().accessToken(accessToken).refreshToken(refreshToken.getToken()).build();
 	}
 
 	// to generate token from user info
@@ -102,8 +134,29 @@ public class AuthenticationService {
 		return signedJWT.serialize();
 	}
 
+	// generate a refresh token
+	private String generateRefreshToken(User user) {
+		String token = passwordEncoder.encode(UUID.randomUUID().toString());
+		Instant expiryTime = Instant.now().plus(refreshTokenDuration, ChronoUnit.SECONDS);
+
+		// Check if the user already has a refresh token
+		return refreshTokenRepository.findByUser(user).map(existingToken -> {
+			// Update existing token
+			existingToken.setToken(token);
+			existingToken.setExpiryTime(expiryTime);
+			refreshTokenRepository.save(existingToken);
+			return existingToken.getToken();
+		}).orElseGet(() -> {
+			// Create a new refresh token
+			RefreshToken newToken = RefreshToken.builder().token(token).expiryTime(expiryTime).user(user).build();
+			refreshTokenRepository.save(newToken);
+			return newToken.getToken();
+		});
+
+	}
+
 	// verify token
-	private boolean verifyToken(String token) throws ParseException, JOSEException {
+	private boolean verifyAccessToken(String token) throws ParseException, JOSEException {
 		JWSVerifier verifier = new MACVerifier(signerKey.getBytes());
 		SignedJWT signedJWT = SignedJWT.parse(token);
 

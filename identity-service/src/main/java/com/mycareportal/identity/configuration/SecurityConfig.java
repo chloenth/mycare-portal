@@ -16,7 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-	private static final String[] PUBLIC_ENDPOINTS = { "/users/registration", "/auth/token", "/auth/introspect" };
+	private static final String[] PUBLIC_ENDPOINTS = { "/users/registration", "/auth/token", "/auth/introspect", "/auth/refresh" };
 
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
