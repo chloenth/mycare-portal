@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.mycareportal.identity.dto.ApiResponse;
 import com.mycareportal.identity.dto.request.AuthenticationRequest;
 import com.mycareportal.identity.dto.request.IntrospectRequest;
+import com.mycareportal.identity.dto.request.LogoutRequest;
 import com.mycareportal.identity.dto.request.RefreshRequest;
 import com.mycareportal.identity.dto.response.AuthenticationResponse;
 import com.mycareportal.identity.dto.response.IntrospectResponse;
@@ -29,15 +30,21 @@ public class AuthenticationController {
 		return ApiResponse.<AuthenticationResponse>builder().result(authenticationService.authenticate(request))
 				.build();
 	}
-	
+
 	@PostMapping("/introspect")
 	ApiResponse<IntrospectResponse> introspectAccessToken(@RequestBody IntrospectRequest request) {
 		return ApiResponse.<IntrospectResponse>builder().result(authenticationService.introspect(request)).build();
 	}
-	
+
 	@PostMapping("/refresh")
 	ApiResponse<AuthenticationResponse> refreshToken(@RequestBody RefreshRequest request) {
-		return ApiResponse.<AuthenticationResponse>builder()
-				.result(authenticationService.refreshToken(request)).build();
+		return ApiResponse.<AuthenticationResponse>builder().result(authenticationService.refreshToken(request))
+				.build();
+	}
+
+	@PostMapping("/logout")
+	ApiResponse<Void> logout(@RequestBody LogoutRequest request) {
+		authenticationService.logout(request);
+		return ApiResponse.<Void>builder().build();
 	}
 }
