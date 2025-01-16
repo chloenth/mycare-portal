@@ -64,6 +64,16 @@ public class UserService {
 		return userRepository.findAll().stream().map(userMapper::toUserResponse).toList();
 	}
 
+	public UserResponse getMyInfo() {
+		var authentication = SecurityContextHolder.getContext().getAuthentication();
+		var username = authentication.getName();
+
+		User user = userRepository.findByUsername(username)
+				.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+		return userMapper.toUserResponse(user);
+	}
+
 	// update a user
 	public UserResponse updateUser(String id, UserUpdateRequest request) {
 		User user = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
