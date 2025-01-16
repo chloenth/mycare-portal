@@ -10,10 +10,12 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import com.mycareportal.identity.dto.request.AuthenticationRequest;
 import com.mycareportal.identity.dto.request.IntrospectRequest;
+import com.mycareportal.identity.dto.request.LogoutRequest;
 import com.mycareportal.identity.dto.request.RefreshRequest;
 import com.mycareportal.identity.dto.response.AuthenticationResponse;
 import com.mycareportal.identity.dto.response.IntrospectResponse;
@@ -93,8 +95,8 @@ public class AuthenticationService {
 
 	// refresh access token
 	public AuthenticationResponse refreshToken(RefreshRequest request) {
-		var token = request.getToken();
-		
+		var token = request.getRefreshToken();
+
 		log.info("token: {}", token);
 
 		var existingRefreshToken = refreshTokenRepository.findByToken(token);
@@ -111,6 +113,17 @@ public class AuthenticationService {
 		var accessToken = generateToken(refreshToken.getUser());
 
 		return AuthenticationResponse.builder().accessToken(accessToken).refreshToken(refreshToken.getToken()).build();
+	}
+
+	@Transactional
+	public void logout(LogoutRequest request) {
+		var token = request.getRefreshToken();
+
+		if (refreshTokenRepository.findByToken(token).isPresent()) {
+			log.info("delete token");
+			refreshTokenRepository.deleteByToken(token);
+		}
+
 	}
 
 	// to generate token from user info
