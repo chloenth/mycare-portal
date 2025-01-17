@@ -19,6 +19,8 @@ public class CustomJwtDecoder implements JwtDecoder {
 	public Jwt decode(String token) throws JwtException {
 		try {
 			SignedJWT signedJWT = SignedJWT.parse(token);
+			
+			log.info("token in identity service: {}", token);
 
 			return new Jwt(token, signedJWT.getJWTClaimsSet().getIssueTime().toInstant(),
 					signedJWT.getJWTClaimsSet().getExpirationTime().toInstant(), signedJWT.getHeader().toJSONObject(),
