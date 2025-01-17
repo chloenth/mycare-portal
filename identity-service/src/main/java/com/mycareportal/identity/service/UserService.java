@@ -54,7 +54,10 @@ public class UserService {
 		user.setPassword(passwordEncoder.encode(request.getPassword()));
 
 		user = userRepository.save(user);
-		ProfileCreationRequest profileRequest = profileMapper.toProfileCreationRequest(request);
+		
+		var profileRequest = profileMapper.toProfileCreationRequest(request);
+		profileRequest.setUserId(user.getId());
+		
 		var profileResponse = profileClient.createProfile(profileRequest);
 		log.info("profile request: {}", profileResponse.toString());
 
