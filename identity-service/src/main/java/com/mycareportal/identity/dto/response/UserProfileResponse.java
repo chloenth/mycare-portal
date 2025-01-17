@@ -1,4 +1,4 @@
-package com.mycareportal.identity.dto.request;
+package com.mycareportal.identity.dto.response;
 
 import java.time.LocalDate;
 
@@ -10,17 +10,18 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ProfileCreationRequest {	
-	String userId;
-	String email;	
-	String firstName;
-	String lastName;	
-	LocalDate dob;
-	String gender;
-	String address;
-	String phoneNumber;
+public class UserProfileResponse {
+    String id;
+    String userId;
+    String firstName;
+    String lastName;
+    String email;
+    LocalDate dob;
+    String gender;
+    String address;
+    String phoneNumber;
 }

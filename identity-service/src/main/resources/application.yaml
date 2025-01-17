@@ -20,3 +20,7 @@ jwt:
   valid-duration: 3600 # in second
   refresh-token:
     duration: 7200 # in second
+    
+app:
+  services:
+    profile: http://localhost:8081/profile
