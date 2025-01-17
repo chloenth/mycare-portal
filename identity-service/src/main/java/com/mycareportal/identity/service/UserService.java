@@ -8,15 +8,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.mycareportal.identity.dto.request.ProfileCreationRequest;
 import com.mycareportal.identity.dto.request.UserCreationRequest;
 import com.mycareportal.identity.dto.request.UserUpdateRequest;
 import com.mycareportal.identity.dto.response.UserResponse;
 import com.mycareportal.identity.entity.User;
 import com.mycareportal.identity.exception.AppException;
 import com.mycareportal.identity.exception.ErrorCode;
+import com.mycareportal.identity.mapper.ProfileMapper;
 import com.mycareportal.identity.mapper.UserMapper;
 import com.mycareportal.identity.repository.RoleRepository;
 import com.mycareportal.identity.repository.UserRepository;
+import com.mycareportal.identity.repository.httpclient.ProfileClient;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,8 @@ public class UserService {
 	RoleRepository roleRepository;
 	UserMapper userMapper;
 	PasswordEncoder passwordEncoder;
+	ProfileClient profileClient;
+	ProfileMapper profileMapper;
 
 	// create new user
 	public UserResponse createUser(UserCreationRequest request) {
@@ -49,6 +54,9 @@ public class UserService {
 		user.setPassword(passwordEncoder.encode(request.getPassword()));
 
 		user = userRepository.save(user);
+		ProfileCreationRequest profileRequest = profileMapper.toProfileCreationRequest(request);
+		var profileResponse = profileClient.createProfile(profileRequest);
+		log.info("profile request: {}", profileResponse.toString());
 
 		return userMapper.toUserResponse(user);
 	}
