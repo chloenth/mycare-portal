@@ -8,7 +8,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.mycareportal.identity.dto.request.ProfileCreationRequest;
 import com.mycareportal.identity.dto.request.UserCreationRequest;
 import com.mycareportal.identity.dto.request.UserUpdateRequest;
 import com.mycareportal.identity.dto.response.UserResponse;

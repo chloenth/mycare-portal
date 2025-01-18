@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import com.mycareportal.profile.dto.request.ProfileCreationRequest;
 import com.mycareportal.profile.dto.response.UserProfileResponse;
 import com.mycareportal.profile.entity.UserProfile;
+import com.mycareportal.profile.exception.AppException;
+import com.mycareportal.profile.exception.ErrorCode;
 import com.mycareportal.profile.mapper.UserProfileMapper;
 import com.mycareportal.profile.repository.UserProfileRepository;
 
@@ -40,7 +42,7 @@ public class UserProfileService {
         return userProfileRepository
                 .findById(profileId)
                 .map(userProfileMapper::toUserProfileResponse)
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
     }
 
     public void deleteProfile(String profileId) {
