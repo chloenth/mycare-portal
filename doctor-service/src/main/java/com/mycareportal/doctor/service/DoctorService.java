@@ -2,6 +2,7 @@ package com.mycareportal.doctor.service;
 
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import com.mycareportal.doctor.dto.request.DoctorCreationRequest;
@@ -35,7 +36,8 @@ public class DoctorService {
 		
 		return doctorMapper.toDoctorResponse(doctorRepository.save(doctor));
 	}
-
+	
+	@PreAuthorize("hasRole('ADMIN')")
 	public List<DoctorResponse> getAllDoctors() {
 		return doctorRepository.findAll().stream().map(doctorMapper::toDoctorResponse).toList();
 	}
@@ -45,6 +47,7 @@ public class DoctorService {
 				.orElseThrow(() -> new AppException(ErrorCode.DOCTOR_NOT_FOUND));
 	}
 	
+	@PreAuthorize("hasRole('ADMIN')")
 	public void deleteDoctor(String doctorId) {
 		doctorRepository.deleteById(doctorId);
 	}

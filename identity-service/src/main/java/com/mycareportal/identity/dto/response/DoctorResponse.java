@@ -1,4 +1,4 @@
-package com.mycareportal.doctor.dto.response;
+package com.mycareportal.identity.dto.response;
 
 import java.time.LocalDate;
 

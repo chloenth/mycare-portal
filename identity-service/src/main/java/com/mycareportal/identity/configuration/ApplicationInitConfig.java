@@ -60,7 +60,7 @@ public class ApplicationInitConfig {
 
 	private void createRoleIfNotExists(RoleRepository roleRepository, String roleName, String description) {
 		if (roleRepository.findById(roleName).isEmpty()) {
-			roleRepository.save(Role.builder().name(roleName).desscription(description).build());
+			roleRepository.save(Role.builder().name(roleName).description(description).build());
 		}
 	}
 }
