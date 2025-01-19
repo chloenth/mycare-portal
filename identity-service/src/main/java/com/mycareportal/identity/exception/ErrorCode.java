@@ -16,7 +16,8 @@ public enum ErrorCode {
 	EMAIL_ALREADY_TAKEN(1006, "Email has already been registered", HttpStatus.BAD_REQUEST),
 	UNAUTHENTICATED(1007, "Unauthenticated", HttpStatus.UNAUTHORIZED),
 	UNAUTHORIZED(1008, "You do not have permission", HttpStatus.FORBIDDEN),
-	INVALID_REFRESH_TOKEN(1009, "Invalid refresh token. Please log in again", HttpStatus.BAD_REQUEST),;
+	INVALID_REFRESH_TOKEN(1009, "Invalid refresh token. Please log in again", HttpStatus.BAD_REQUEST),
+	ROLE_NOT_FOUND(1010, "Role not found", HttpStatus.BAD_REQUEST),;
 
 	ErrorCode(int code, String message, HttpStatusCode statusCode) {
 		this.code = code;

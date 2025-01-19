@@ -31,9 +31,14 @@ import lombok.extern.slf4j.Slf4j;
 public class UserController {
 	UserService userService;
 
-	@PostMapping("/registration")
-	ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
-		return ApiResponse.<UserResponse>builder().result(userService.createUser(request)).build();
+	@PostMapping("/registration-patient")
+	ApiResponse<UserResponse> createUserWithPatientRole(@RequestBody @Valid UserCreationRequest request) {
+		return ApiResponse.<UserResponse>builder().result(userService.createUserWithPatientRole(request)).build();
+	}
+	
+	@PostMapping("/registration-doctor")
+	ApiResponse<UserResponse> createUserWithDoctorRole(@RequestBody @Valid UserCreationRequest request) {
+		return ApiResponse.<UserResponse>builder().result(userService.createUserWithDoctorRole(request)).build();
 	}
 
 	@GetMapping

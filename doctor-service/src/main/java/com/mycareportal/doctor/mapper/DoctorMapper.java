@@ -13,5 +13,6 @@ public interface DoctorMapper {
 	@Mapping(target = "department", ignore = true)
 	Doctor toDoctor(DoctorCreationRequest request);
 	
+	@Mapping(target = "department", source = "department.name")
 	DoctorResponse toDoctorResponse(Doctor doctor);
 }

@@ -1,4 +1,4 @@
-package com.mycareportal.doctor.dto.response;
+package com.mycareportal.identity.dto.request;
 
 import java.time.LocalDate;
 
@@ -14,8 +14,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DoctorResponse {
-	String id;
+public class DoctorCreationRequest {
 	String userId;
 	String profileId;
 	String specialization;

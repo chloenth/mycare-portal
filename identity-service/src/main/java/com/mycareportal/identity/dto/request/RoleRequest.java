@@ -14,5 +14,5 @@ import lombok.experimental.FieldDefaults;
 @Builder
 public class RoleRequest {
 	String name;
-	String desscription;
+	String description;
 }
