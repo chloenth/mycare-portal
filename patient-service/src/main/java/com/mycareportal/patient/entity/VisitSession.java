@@ -1,11 +1,13 @@
 package com.mycareportal.patient.entity;
 
-import java.time.LocalDate;
+import java.time.Instant;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,20 +23,18 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Patient {
+public class VisitSession {
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	String id;
 	
-	String userId;
-	String profileId;
+	String appointmentId;
 	
-	String allergies;
-	String chronicIllnesses;
-	String familyMedicalHistory;
-	String bloodType;
-	String height;
-	String weight;
-	Boolean hasInsurance;
-	LocalDate createdDate;
+	@ManyToOne
+	@JoinColumn(name="patient_id")
+	Patient patient;
+	
+	Instant startDateTime;
+	String status;
+	Instant endDateTime;
 }

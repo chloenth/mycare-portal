@@ -1,11 +1,11 @@
 package com.mycareportal.patient.entity;
 
-import java.time.LocalDate;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,20 +21,18 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Patient {
+public class MedicalRecord {
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	String id;
 	
-	String userId;
-	String profileId;
+	@ManyToOne
+	@JoinColumn(name="visit_session_id")
+	VisitSession visitSession;
 	
-	String allergies;
-	String chronicIllnesses;
-	String familyMedicalHistory;
-	String bloodType;
-	String height;
-	String weight;
-	Boolean hasInsurance;
-	LocalDate createdDate;
+	String departmentId;
+	String doctorId;
+	String patientSymptoms;
+	String doctorDiagnosis;
+	String doctorNote;
 }
