@@ -16,19 +16,23 @@ import com.mycareportal.identity.dto.request.ProfileCreationRequest;
 import com.mycareportal.identity.dto.request.UserCreationRequest;
 import com.mycareportal.identity.dto.request.UserUpdateRequest;
 import com.mycareportal.identity.dto.response.DoctorResponse;
+import com.mycareportal.identity.dto.response.PatientResponse;
 import com.mycareportal.identity.dto.response.UserProfileResponse;
 import com.mycareportal.identity.dto.response.UserResponse;
 import com.mycareportal.identity.entity.User;
 import com.mycareportal.identity.exception.AppException;
 import com.mycareportal.identity.exception.ErrorCode;
 import com.mycareportal.identity.mapper.DoctorMapper;
+import com.mycareportal.identity.mapper.PatientMapper;
 import com.mycareportal.identity.mapper.ProfileMapper;
 import com.mycareportal.identity.mapper.UserMapper;
 import com.mycareportal.identity.repository.RoleRepository;
 import com.mycareportal.identity.repository.UserRepository;
 import com.mycareportal.identity.repository.httpclient.DoctorClient;
+import com.mycareportal.identity.repository.httpclient.PatientClient;
 import com.mycareportal.identity.repository.httpclient.ProfileClient;
 
+import feign.Feign;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -41,63 +45,67 @@ import lombok.extern.slf4j.Slf4j;
 public class UserService {
 	UserRepository userRepository;
 	RoleRepository roleRepository;
+	
 	UserMapper userMapper;
 	PasswordEncoder passwordEncoder;
+	
 	ProfileClient profileClient;
 	ProfileMapper profileMapper;
+	
 	DoctorMapper doctorMapper;
 	DoctorClient doctorClient;
+	
+	PatientMapper patientMapper;
+	PatientClient patientClient;
 
 	// create new user with patient role
 	public UserResponse createUserWithPatientRole(UserCreationRequest request) {
-		// check if username is existed
-		checkUsernameExisted(request.getUsername());
-
 		// create new user if not existed
-		User user = userMapper.toUser(request);
-
-		var role = roleRepository.findById(PredefinedRole.PATIENT_ROLE)
-				.orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
-		user.setRoles(new HashSet<>(List.of(role)));
-		user.setPassword(passwordEncoder.encode(request.getPassword()));
-
-		user = userRepository.save(user);
-
-		var profileRequest = profileMapper.toProfileCreationRequest(request);
-		profileRequest.setUserId(user.getId());
-		var profileResponse = profileClient.createProfile(profileRequest);
+		User user = createUser(request, PredefinedRole.PATIENT_ROLE);
 		
+		ApiResponse<UserProfileResponse> profileResponse = null;
+		ApiResponse<PatientResponse> patientResponse = null;
+
+		try {
+			profileResponse = createProfile(request, user.getId());
+			
+			var patientRequest = patientMapper.toPatientCreationRequest(request);
+			patientRequest.setProfileId(profileResponse.getResult().getId());
+			patientRequest.setUserId(user.getId());
+			
+			patientResponse = patientClient.createPatient(patientRequest);
+
+			log.info("profileResponse: {}", profileResponse.toString());
+			log.info("doctorResponse: {}", patientResponse.toString());
+		} catch (Exception e) {
+			// roll back if profile creation fail or doctor creation fail
+			userRepository.delete(user);
+
+			if (profileResponse != null && profileResponse.getResult() != null) {
+				profileClient.deleteProfile(profileResponse.getResult().getId());
+			}
+
+			throw new RuntimeException("Fail to create user");
+		}
+
 		var userResponse = userMapper.toUserResponse(user);
 		userResponse.setProfileId(profileResponse.getResult().getId());
-		
+		userResponse.setPatientId(patientResponse.getResult().getId());
 
-		return userResponse;
+		return userResponse;	
 	}
 
 	// create new user with doctor role
 	@PreAuthorize("hasRole('ADMIN')")
 	public UserResponse createUserWithDoctorRole(UserCreationRequest request) {
-		// check if username is existed
-		checkUsernameExisted(request.getUsername());
-
 		// create new user if not existed
-		User user = userMapper.toUser(request);
-
-		var role = roleRepository.findById(PredefinedRole.DOCTOR_ROLE)
-				.orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
-		user.setRoles(new HashSet<>(List.of(role)));
-		user.setPassword(passwordEncoder.encode(request.getPassword()));
-
-		user = userRepository.save(user);
-
-		var profileRequest = profileMapper.toProfileCreationRequest(request);
-		profileRequest.setUserId(user.getId());
+		User user = createUser(request, PredefinedRole.DOCTOR_ROLE);
 
 		ApiResponse<UserProfileResponse> profileResponse = null;
 		ApiResponse<DoctorResponse> doctorResponse = null;
 
 		try {
-			profileResponse = profileClient.createProfile(profileRequest);
+			profileResponse = createProfile(request, user.getId());
 			
 			var doctorRequest = doctorMapper.toDoctorCreationRequest(request);
 			doctorRequest.setProfileId(profileResponse.getResult().getId());
@@ -167,10 +175,26 @@ public class UserService {
 		userRepository.deleteById(userId);
 	}
 
-	private void checkUsernameExisted(String username) {
-		boolean usernameExists = userRepository.existsByUsername(username);
+	private User createUser(UserCreationRequest request, String role) {
+		// check if username is existed
+		boolean usernameExists = userRepository.existsByUsername(request.getUsername());
 		if (usernameExists) {
 			throw new AppException(ErrorCode.USER_ALREADY_EXISTED);
 		}
+		
+		User user = userMapper.toUser(request);
+
+		var roleInDB = roleRepository.findById(role)
+				.orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+		user.setRoles(new HashSet<>(List.of(roleInDB)));
+		user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+		return userRepository.save(user);
+	}
+	
+	private ApiResponse<UserProfileResponse> createProfile(UserCreationRequest request, String userId) {
+		var profileRequest = profileMapper.toProfileCreationRequest(request);
+		profileRequest.setUserId(userId);
+		return profileClient.createProfile(profileRequest);
 	}
 }

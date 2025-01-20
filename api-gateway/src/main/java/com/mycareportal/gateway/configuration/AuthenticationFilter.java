@@ -36,7 +36,7 @@ import reactor.core.publisher.Mono;
 public class AuthenticationFilter implements GlobalFilter, Ordered {
 
 	@NonFinal
-	private String[] publicEndpoints = { "/identity/auth/.*", "identity/users/registration" };
+	private String[] publicEndpoints = { "/identity/auth/.*", "/identity/users/registration" };
 
 	@NonFinal
 	@Value("${app.api-prefix}")

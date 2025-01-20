@@ -1,41 +1,29 @@
-package com.mycareportal.patient.entity;
+package com.mycareportal.identity.dto.response;
 
 import java.time.LocalDate;
-import java.util.List;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-@Entity
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Patient {
-	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
+public class PatientResponse {
 	String id;
-	
 	String userId;
 	String profileId;
-	
 	String allergies;
 	String chronicIllnesses;
 	String familyMedicalHistory;
 	String bloodType;
-	String height;
-	String weight;
+	Double height;
+	Double weight;
 	Boolean hasInsurance;
 	LocalDate createdDate;
 }
