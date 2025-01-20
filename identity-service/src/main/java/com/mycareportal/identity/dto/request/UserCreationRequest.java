@@ -43,4 +43,12 @@ public class UserCreationRequest {
 	LocalDate dateOfJoining;
 	String title;
 	Long salary;
+	
+	String allergies;
+	String chronicIllnesses;
+	String familyMedicalHistory;
+	String bloodType;
+	Double height;
+	Double weight;
+	Boolean hasInsurance;
 }

@@ -1,6 +1,4 @@
-package com.mycareportal.patient.dto.response;
-
-import java.time.LocalDate;
+package com.mycareportal.identity.dto.request;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -14,10 +12,10 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PatientResponse {
-	String id;
+public class PatientCreationRequest {
 	String userId;
 	String profileId;
+	
 	String allergies;
 	String chronicIllnesses;
 	String familyMedicalHistory;
@@ -25,5 +23,4 @@ public class PatientResponse {
 	Double height;
 	Double weight;
 	Boolean hasInsurance;
-	LocalDate createdDate;
 }
