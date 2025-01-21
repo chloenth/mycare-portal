@@ -1,9 +1,8 @@
-package com.mycareportal.patient.entity;
-
-import java.io.Serializable;
+package com.mycareportal.event.dto;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -11,10 +10,9 @@ import lombok.experimental.FieldDefaults;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class MedicineTrackingId implements Serializable {
-    private static final long serialVersionUID = 1L; 
-    
-	String patientId;
-    String medicineId;
+public class KafkaMessage<T> {
+    private String type;
+    private T payload;
 }

@@ -25,11 +25,11 @@ public class MedicalRecord {
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	String id;
-	
+
 	@ManyToOne
-	@JoinColumn(name="visit_session_id")
+	@JoinColumn(name = "visit_session_id")
 	VisitSession visitSession;
-	
+
 	String departmentId;
 	String doctorId;
 	String patientSymptoms;
