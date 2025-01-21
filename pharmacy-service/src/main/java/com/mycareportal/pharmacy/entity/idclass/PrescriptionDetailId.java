@@ -1,4 +1,4 @@
-package com.mycareportal.patient.entity;
+package com.mycareportal.pharmacy.entity.idclass;
 
 import java.io.Serializable;
 
@@ -12,9 +12,10 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class MedicineTrackingId implements Serializable {
+public class PrescriptionDetailId implements Serializable {
     private static final long serialVersionUID = 1L; 
     
-	String patientId;
-    String medicineId;
+	String prescriptionSummary;
+	String medicalRecordId;
+	String medicine;
 }

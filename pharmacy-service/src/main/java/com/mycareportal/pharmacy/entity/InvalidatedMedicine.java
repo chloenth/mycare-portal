@@ -1,10 +1,10 @@
-package com.mycareportal.patient.entity;
+package com.mycareportal.pharmacy.entity;
 
 import java.time.LocalDate;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,15 +20,17 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@IdClass(MedicineTrackingId.class)
-public class MedicineTracking {
-	@Id
-	String patientId;
-
+public class InvalidatedMedicine {
 	@Id
 	String medicineId;
-
-	String dosage;
-	LocalDate startDate;
-	LocalDate endDate;
+	
+	@Column(nullable = false)
+	String name;
+	String description;
+	Long quantityInStock;
+	String unit;
+	LocalDate importedDate;
+	LocalDate expiredDate;
+	String batchNumber;
+	String reason;
 }

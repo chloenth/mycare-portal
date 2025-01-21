@@ -1,10 +1,9 @@
-package com.mycareportal.patient.entity;
-
-import java.time.LocalDate;
+package com.mycareportal.pharmacy.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,15 +19,11 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@IdClass(MedicineTrackingId.class)
-public class MedicineTracking {
+public class PrescriptionSummary {
 	@Id
-	String patientId;
-
-	@Id
-	String medicineId;
-
-	String dosage;
-	LocalDate startDate;
-	LocalDate endDate;
+	@GeneratedValue(strategy = GenerationType.UUID)
+	String id;
+	
+	String visitSessionId;
+	
 }

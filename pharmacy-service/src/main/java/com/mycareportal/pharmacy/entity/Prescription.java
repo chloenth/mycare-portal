@@ -1,10 +1,14 @@
-package com.mycareportal.patient.entity;
+package com.mycareportal.pharmacy.entity;
 
 import java.time.LocalDate;
+
+import com.mycareportal.pharmacy.entity.idclass.PrescriptionId;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,15 +24,16 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@IdClass(MedicineTrackingId.class)
-public class MedicineTracking {
+@IdClass(PrescriptionId.class)
+public class Prescription {	
 	@Id
-	String patientId;
-
+	@ManyToOne
+	@JoinColumn(name = "prescription_summary_id")
+	PrescriptionSummary prescriptionSummary;
 	@Id
-	String medicineId;
-
-	String dosage;
-	LocalDate startDate;
-	LocalDate endDate;
+	String medicalRecordId;
+	
+	String doctorDiagnosis;
+	LocalDate issuedDate;
+	String doctorNote;
 }
