@@ -1,6 +1,7 @@
 package com.mycareportal.appointment.dto.request;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -16,7 +17,10 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AppointmentCreationRequest {
 	String patientId;
+	String doctorId;
+	String departmentId;
+	LocalDate appointmentDate;
+	LocalTime time;
 	LocalDate createdDate;
-	LocalDate visitDate;
 	String status;
 }

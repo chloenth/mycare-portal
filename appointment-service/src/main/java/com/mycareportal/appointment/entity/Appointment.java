@@ -1,6 +1,7 @@
 package com.mycareportal.appointment.entity;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,11 +24,14 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Appointment {
 	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	String id;
 	
 	String patientId;
+	String doctorId;
+	String departmentId;
+	LocalDate appointmentDate;
+	LocalTime time;
 	LocalDate createdDate;
-	LocalDate visitDate;
 	String status;
 }

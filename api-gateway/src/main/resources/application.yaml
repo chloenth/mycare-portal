@@ -22,3 +22,15 @@ spring:
           - Path=${app.api-prefix}/profile/users/**
           filters:
           - StripPrefix=2
+        - id: doctor_service
+          uri: http://localhost:8082
+          predicates:
+          - Path=${app.api-prefix}/doctor/users/**
+          filters:
+          - StripPrefix=2
+        - id: patient_service
+          uri: http://localhost:8083
+          predicates:
+          - Path=${app.api-prefix}/patient/users/**
+          filters:
+          - StripPrefix=2

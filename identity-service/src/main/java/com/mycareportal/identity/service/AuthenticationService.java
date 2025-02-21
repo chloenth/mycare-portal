@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
 
@@ -13,16 +14,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import com.mycareportal.identity.dto.request.AuthenticationRequest;
-import com.mycareportal.identity.dto.request.IntrospectRequest;
-import com.mycareportal.identity.dto.request.LogoutRequest;
-import com.mycareportal.identity.dto.request.RefreshRequest;
-import com.mycareportal.identity.dto.response.AuthenticationResponse;
-import com.mycareportal.identity.dto.response.IntrospectResponse;
+import com.mycareportal.identity.dto.request.authentication.AuthenticationRequest;
+import com.mycareportal.identity.dto.request.authentication.IntrospectRequest;
+import com.mycareportal.identity.dto.request.authentication.LogoutRequest;
+import com.mycareportal.identity.dto.request.authentication.RefreshRequest;
+import com.mycareportal.identity.dto.response.authentication.AuthenticationResponse;
+import com.mycareportal.identity.dto.response.authentication.IntrospectResponse;
+import com.mycareportal.identity.dto.response.role.RoleResponse;
 import com.mycareportal.identity.entity.RefreshToken;
 import com.mycareportal.identity.entity.User;
 import com.mycareportal.identity.exception.AppException;
 import com.mycareportal.identity.exception.ErrorCode;
+import com.mycareportal.identity.mapper.RoleMapper;
 import com.mycareportal.identity.repository.RefreshTokenRepository;
 import com.mycareportal.identity.repository.UserRepository;
 import com.nimbusds.jose.JOSEException;
@@ -48,6 +51,7 @@ public class AuthenticationService {
 	UserRepository userRepository;
 	RefreshTokenRepository refreshTokenRepository;
 	PasswordEncoder passwordEncoder;
+	RoleMapper roleMapper;
 
 	@NonFinal
 	@Value("${jwt.signerKey}")
@@ -76,8 +80,11 @@ public class AuthenticationService {
 		String token = generateToken(user);
 		// generate refresh token
 		String refreshToken = generateRefreshToken(user);
+		
+		Set<RoleResponse> roles = roleMapper.toSetRoleResponse(user.getRoles());
 
-		return AuthenticationResponse.builder().accessToken(token).refreshToken(refreshToken).build();
+		return AuthenticationResponse.builder().accessToken(token).refreshToken(refreshToken).roles(roles)
+				.build();
 	}
 
 	// introspect access token
