@@ -8,7 +8,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycareportal.identity.dto.ApiResponse;
+import com.mycareportal.identity.dto.response.api.ApiResponse;
 import com.mycareportal.identity.exception.ErrorCode;
 
 import jakarta.servlet.ServletException;

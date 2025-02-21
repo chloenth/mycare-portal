@@ -1,20 +1,19 @@
 package com.mycareportal.gateway.configuration;
 
 import java.util.Arrays;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -51,23 +50,28 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
 		// if request path is public endpoint, continue the request
 		if (isPublicEndpoint(exchange.getRequest())) {
+			log.info("Enter authentication filter, public endpoint....");
 			return chain.filter(exchange);
 		}
+		
+		log.info("Enter authentication filter, private endpoint....");
 
-		// Get token from authorization header
-		List<String> authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION);
-
-		// return unauthorized response when no header found
-		if (CollectionUtils.isEmpty(authHeader)) {
+		HttpCookie accessTokenCookie = exchange.getRequest().getCookies().getFirst("accessToken"); // Get the first
+																									// matching cookie
+		if (accessTokenCookie == null) {
 			return unauthenticated(exchange.getResponse());
 		}
 
-		String token = authHeader.getFirst().replace("Bearer ", "");
-		log.info("Token: {}", token);
+		String token = accessTokenCookie.getValue();
+		log.info("accessToken: {}", token);
 
 		return identityService.introspect(token).flatMap(apiResponse -> {
 			if (apiResponse.getResult().isValid()) {
-				return chain.filter(exchange);
+				// Modify request by adding token to Authorization header
+				ServerWebExchange modifiedExchange = exchange.mutate()
+						.request(builder -> builder.header(HttpHeaders.AUTHORIZATION, "Bearer " + token)).build();
+
+				return chain.filter(modifiedExchange);
 			}
 			return unauthenticated(exchange.getResponse());
 		}).onErrorResume(throwable -> unauthenticated(exchange.getResponse()));

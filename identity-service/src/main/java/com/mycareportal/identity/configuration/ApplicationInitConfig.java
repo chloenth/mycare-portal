@@ -8,11 +8,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mycareportal.identity.constant.PredefinedRole;
+import com.mycareportal.identity.dto.request.profile.ProfileCreationRequest;
 import com.mycareportal.identity.entity.Role;
 import com.mycareportal.identity.entity.User;
 import com.mycareportal.identity.repository.RoleRepository;
 import com.mycareportal.identity.repository.UserRepository;
+import com.mycareportal.identity.repository.httpclient.ProfileClient;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 @Configuration
 public class ApplicationInitConfig {
 	PasswordEncoder passwordEncoder;
+	ProfileClient profileClient;
+	ObjectMapper objectMapper;
 
 	@NonFinal
 	static final String ADMIN_USERNAME = "admin";
@@ -41,6 +46,7 @@ public class ApplicationInitConfig {
 			createRoleIfNotExists(roleRepository, PredefinedRole.DOCTOR_ROLE, "Doctor role");
 			createRoleIfNotExists(roleRepository, PredefinedRole.PATIENT_ROLE, "Patient role");
 			createRoleIfNotExists(roleRepository, PredefinedRole.ADMIN_ROLE, "Admin role");
+			createRoleIfNotExists(roleRepository, PredefinedRole.USER_ROLE, "User role");
 
 			// create admin account if not exists
 			if (userRepository.findByUsername(ADMIN_USERNAME).isEmpty()) {
@@ -50,7 +56,15 @@ public class ApplicationInitConfig {
 
 				User user = User.builder().username(ADMIN_USERNAME).password(passwordEncoder.encode(ADMIN_PASSWORD))
 						.roles(roles).build();
-				userRepository.save(user);
+				user = userRepository.save(user);
+				
+				// create profile for account admin
+				ProfileCreationRequest profileCreationRequest = new ProfileCreationRequest();
+				profileCreationRequest.setUserId(user.getId());
+				
+				String profileRequestJson = objectMapper.writeValueAsString(profileCreationRequest);
+				
+				profileClient.createProfile(null, profileRequestJson);
 				log.warn("admin user has been created with default password: admin, please change it");
 			}
 			log.info("Application initialization completed .....");

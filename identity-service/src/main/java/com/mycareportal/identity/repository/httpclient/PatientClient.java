@@ -5,9 +5,9 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.mycareportal.identity.dto.ApiResponse;
 import com.mycareportal.identity.dto.request.PatientCreationRequest;
 import com.mycareportal.identity.dto.response.PatientResponse;
+import com.mycareportal.identity.dto.response.api.ApiResponse;
 
 @FeignClient(name = "patient-service", url = "${app.services.patient}")
 public interface PatientClient {

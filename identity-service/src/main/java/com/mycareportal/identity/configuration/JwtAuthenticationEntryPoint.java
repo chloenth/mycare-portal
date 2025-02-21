@@ -7,7 +7,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycareportal.identity.dto.ApiResponse;
+import com.mycareportal.identity.dto.response.api.ApiResponse;
 import com.mycareportal.identity.exception.ErrorCode;
 
 import jakarta.servlet.ServletException;

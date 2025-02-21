@@ -29,8 +29,8 @@ import lombok.experimental.FieldDefaults;
 @Table(name = "user_account")
 public class User {
 	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	String id;
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	Long id;
 
 	@Column(unique = true)
 	String username;

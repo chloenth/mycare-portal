@@ -1,0 +1,16 @@
+server:
+  port: 8085
+  servlet:
+    context-path: /appointment
+
+spring:
+  datasource:
+    url: ${DBMS_CONNECTION:jdbc:mysql://localhost:3306/mycare_appointment}
+    driverClassName: ${DBSM_DRIVER:com.mysql.cj.jdbc.Driver}
+    username: ${DBMS_USERNAME:root}
+    password: ${DBMS_PASSWORD:root}
+  jpa:
+    hibernate:
+      dialect: ${Dialect:org.hibernate.dialect.MySQL8Dialect} 
+      ddl-auto: update
+    show-sql: true

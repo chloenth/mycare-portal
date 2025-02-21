@@ -35,7 +35,7 @@ public class Doctor {
 	@JoinColumn(name="department_id")
 	Department department;
 	String education;
-	LocalDate dateOfJoining;
+	LocalDate joiningDate;
 	String title;
 	Long salary;
 }

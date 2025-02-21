@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
 
     // handle general runtime exception - UNCATEGORIZED_EXCEPTION
     @ExceptionHandler(value = Exception.class)
-    ResponseEntity<ApiResponse<String>> handlingRuntimeException(RuntimeException exception) {
+    ResponseEntity<ApiResponse<String>> handlingRuntimeException(Exception exception) {
         log.error("Exception: ", exception);
         ApiResponse<String> apiResponse = new ApiResponse<>();
 

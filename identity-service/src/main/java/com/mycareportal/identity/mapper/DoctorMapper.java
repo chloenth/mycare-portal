@@ -4,7 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import com.mycareportal.identity.dto.request.DoctorCreationRequest;
-import com.mycareportal.identity.dto.request.UserCreationRequest;
+import com.mycareportal.identity.dto.request.user.UserCreationRequest;
 
 @Mapper(componentModel = "spring")
 public interface DoctorMapper {

@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.mycareportal.identity.dto.request.RoleRequest;
-import com.mycareportal.identity.dto.response.RoleResponse;
+import com.mycareportal.identity.dto.request.role.RoleRequest;
+import com.mycareportal.identity.dto.response.role.RoleResponse;
 import com.mycareportal.identity.entity.Role;
 import com.mycareportal.identity.mapper.RoleMapper;
 import com.mycareportal.identity.repository.RoleRepository;

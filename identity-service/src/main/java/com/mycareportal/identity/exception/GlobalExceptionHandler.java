@@ -10,7 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import com.mycareportal.identity.dto.ApiResponse;
+import com.mycareportal.identity.dto.response.api.ApiResponse;
 
 import jakarta.validation.ConstraintViolation;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
 
 	// handle general runtime exception - UNCATEGORIZED_EXCEPTION
 	@ExceptionHandler(value = Exception.class)
-	ResponseEntity<ApiResponse<String>> handlingRuntimeException(RuntimeException exception) {
+	ResponseEntity<ApiResponse<String>> handlingException(Exception exception) {
 		log.error("Exception: ", exception);
 		ApiResponse<String> apiResponse = new ApiResponse<>();
 
@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
 				}
 			}
 
-			log.info("aatributes: {}", attributes.toString());
+			log.info("atributes: {}", attributes.toString());
 		} catch (IllegalArgumentException e) {
 
 		}

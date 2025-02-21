@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.mycareportal.identity.dto.ApiResponse;
-import com.mycareportal.identity.dto.request.RoleRequest;
-import com.mycareportal.identity.dto.response.RoleResponse;
+import com.mycareportal.identity.dto.request.role.RoleRequest;
+import com.mycareportal.identity.dto.response.api.ApiResponse;
+import com.mycareportal.identity.dto.response.role.RoleResponse;
 import com.mycareportal.identity.service.RoleService;
 
 import lombok.AccessLevel;
