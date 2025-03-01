@@ -17,9 +17,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mycareportal.event.dto.KafkaMessage;
 import com.mycareportal.identity.constant.PredefinedRole;
+import com.mycareportal.identity.dto.request.kafka.UsernameKafkaUpdateRequest;
+import com.mycareportal.identity.dto.request.user.PasswordUpdateRequest;
 import com.mycareportal.identity.dto.request.user.UserCreationRequest;
-import com.mycareportal.identity.dto.request.user.UserUpdateRequest;
+import com.mycareportal.identity.dto.request.user.UsernameUpdateRequest;
+import com.mycareportal.identity.dto.request.userprofile.UserProfileRequest;
 import com.mycareportal.identity.dto.response.api.ApiResponse;
 import com.mycareportal.identity.dto.response.pagedata.PageDataResponse;
 import com.mycareportal.identity.dto.response.pagedata.profile.PageDataProfileResponse;
@@ -39,6 +43,8 @@ import com.mycareportal.identity.repository.UserRepository;
 import com.mycareportal.identity.repository.httpclient.DoctorClient;
 import com.mycareportal.identity.repository.httpclient.PatientClient;
 import com.mycareportal.identity.repository.httpclient.ProfileClient;
+import com.mycareportal.identity.repository.httpclient.SearchClient;
+import com.mycareportal.identity.service.kafka.KafkaProducerService;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -53,12 +59,14 @@ public class UserService {
 	UserRepository userRepository;
 	RoleRepository roleRepository;
 
-	UserMapper userMapper;
 	PasswordEncoder passwordEncoder;
 
 	ProfileClient profileClient;
 	ProfileMapper profileMapper;
+	UserMapper userMapper;
 	ObjectMapper objectMapper;
+
+	KafkaProducerService kafkaProducerService;
 
 	int PAGE_SIZE = 5;
 	String USERNAME = "username";
@@ -66,6 +74,7 @@ public class UserService {
 
 	DoctorMapper doctorMapper;
 	DoctorClient doctorClient;
+	SearchClient searchClient;
 
 	PatientMapper patientMapper;
 	PatientClient patientClient;
@@ -89,18 +98,31 @@ public class UserService {
 //		Create Profile
 		var profileRequest = profileMapper.toProfileCreationRequest(userRequest);
 		profileRequest.setUserId(user.getId());
+		log.info("phoneNumber in request in user service: {}", profileRequest.getPhoneNumber());
+
+		ApiResponse<ProfileResponse> profileResponse = null;
 
 		try {
 			String profileJson = objectMapper.writeValueAsString(profileRequest);
-			ApiResponse<ProfileResponse> profileResponse = profileClient.createProfile(avatarFile, profileJson);
+			profileResponse = profileClient.createProfile(avatarFile, profileJson);
 
-			return userMapper.toUserWithProfileResponse(user, profileResponse.getResult());
+			log.info("avatar in repsonse in user service: {}", profileResponse.getResult().getAvatar());
+
+			UserWithProfileResponse userWithProfileResponse = userMapper.toUserWithProfileResponse(user,
+					profileResponse.getResult());
+
+			kafkaProducerService.sendUserCreatedEvent(KafkaMessage.<UserProfileRequest>builder().type("UserCreation")
+					.payload(userMapper.toUserProfileRequest(userWithProfileResponse)).build());
+
+			return userWithProfileResponse;
 
 		} catch (Exception e) {
 			// roll back if profile creation fail
-			userRepository.delete(user);
+			if (profileResponse == null || profileResponse.getCode() != 1000) {
+				userRepository.delete(user);
+			}
 
-			throw new RuntimeException("Fail to create user");
+			throw new RuntimeException("Failed to create user", e);
 		}
 
 	}
@@ -179,41 +201,46 @@ public class UserService {
 //		return userResponse;
 //	}
 
-	// get paged users
-	@PreAuthorize("hasRole('ADMIN')")
-	public PageDataUserResponse getUsersWithProfile(int page, String sortBy, String order) {
-		var authentication = SecurityContextHolder.getContext().getAuthentication();
-		log.info("authentication: {}", authentication);
-		log.info("name: {}", authentication.getName());
-		log.info("authorities: {}", authentication.getAuthorities());
-
-		// Sort By Username
-		if (USERNAME.equals(sortBy)) {
-			log.info("sortBy username: {}", sortBy);
-			return getUsersAndSortByUsername(page, order);
-		}
-
-		log.info("sortBy: {}", sortBy);
-		log.info("page: {}", page);
-
-		// Sort By pther fields from Profile Service
-		ApiResponse<PageDataProfileResponse> pageDataProfileResponse = profileClient.getProfiles(null, page, sortBy,
-				order);
-		List<ProfileResponse> profilesResponse = pageDataProfileResponse.getResult().getProfileResponse();
-
-		List<Long> userIds = profilesResponse.stream().map(ProfileResponse::getUserId).toList();
-
-		List<User> users = userRepository.findAllById(userIds);
-
-		Map<Long, User> userMap = users.stream().collect(Collectors.toMap(User::getId, Function.identity()));
-
-		List<UserWithProfileResponse> userWithProfileResponses = profilesResponse.stream().map(profileResponse -> {
-			User user = userMap.get(profileResponse.getUserId());
-			return userMapper.toUserWithProfileResponse(user, profileResponse);
-		}).toList();
-
-		return new PageDataUserResponse(userWithProfileResponses, pageDataProfileResponse.getResult().getPageData());
+	// get all users
+	public List<UserResponse> getAllUsers() {
+		return userRepository.findAll().stream().map(userMapper::toUserResponse).toList();
 	}
+
+	// get paged users
+//	@PreAuthorize("hasRole('ADMIN')")
+//	public PageDataUserResponse getUsersWithProfile(int page, String sortBy, String order) {
+//		var authentication = SecurityContextHolder.getContext().getAuthentication();
+//		log.info("authentication: {}", authentication);
+//		log.info("name: {}", authentication.getName());
+//		log.info("authorities: {}", authentication.getAuthorities());
+//
+//		// Sort By Username
+//		if (USERNAME.equals(sortBy)) {
+//			log.info("sortBy username: {}", sortBy);
+//			return getUsersAndSortByUsername(page, order);
+//		}
+//
+//		log.info("sortBy: {}", sortBy);
+//		log.info("page: {}", page);
+//
+//		// Sort By pther fields from Profile Service
+//		ApiResponse<PageDataProfileResponse> pageDataProfileResponse = profileClient.getProfiles(null, page, sortBy,
+//				order);
+//		List<ProfileResponse> profilesResponse = pageDataProfileResponse.getResult().getProfileResponse();
+//
+//		List<Long> userIds = profilesResponse.stream().map(ProfileResponse::getUserId).toList();
+//
+//		List<User> users = userRepository.findAllById(userIds);
+//
+//		Map<Long, User> userMap = users.stream().collect(Collectors.toMap(User::getId, Function.identity()));
+//
+//		List<UserWithProfileResponse> userWithProfileResponses = profilesResponse.stream().map(profileResponse -> {
+//			User user = userMap.get(profileResponse.getUserId());
+//			return userMapper.toUserWithProfileResponse(user, profileResponse);
+//		}).toList();
+//
+//		return new PageDataUserResponse(userWithProfileResponses, pageDataProfileResponse.getResult().getPageData());
+//	}
 
 	public UserResponse getMyInfo() {
 		log.info("access to user service myinfo");
@@ -228,14 +255,35 @@ public class UserService {
 		return userMapper.toUserResponse(user);
 	}
 
-	// update a user
-	public UserResponse updateUser(Long id, UserUpdateRequest request) {
+	// update username
+	public UserResponse updateUsername(Long id, UsernameUpdateRequest request) {
 		User user = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-		userMapper.updateUser(user, request);
-		user.setPassword(passwordEncoder.encode(request.getPassword()));
+		String newUsername = request.getUsername();
 
-		var roles = roleRepository.findAllById(request.getRoles());
-		user.setRoles(new HashSet<>(roles));
+		boolean usernameExists = userRepository.existsByUsername(newUsername);
+		if (usernameExists) {
+			throw new AppException(ErrorCode.USER_ALREADY_EXISTED);
+		}
+
+		user.setUsername(newUsername);
+
+		UserResponse userResponse = userMapper.toUserResponse(userRepository.save(user));
+
+		UsernameKafkaUpdateRequest kafkaRequest = UsernameKafkaUpdateRequest.builder()
+				.username(userResponse.getUsername()).userId(userResponse.getId()).build();
+
+		kafkaProducerService
+				.sendUsernameUpdatedEvent(KafkaMessage.<UsernameKafkaUpdateRequest>builder().type("UsernameUpdate").payload(kafkaRequest).build());
+
+		return userResponse;
+	}
+
+	// update password
+	public UserResponse updatePassword(Long id, PasswordUpdateRequest request) {
+		User user = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+		String newPassword = request.getPassword();
+
+		user.setPassword(passwordEncoder.encode(newPassword));
 
 		return userMapper.toUserResponse(userRepository.save(user));
 	}

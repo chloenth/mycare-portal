@@ -17,7 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mycareportal.event.dto.KafkaMessage;
+import com.mycareportal.profile.dto.request.KafkaProfileUpdateRequest;
 import com.mycareportal.profile.dto.request.ProfileCreationRequest;
+import com.mycareportal.profile.dto.request.ProfileUpdateRequest;
 import com.mycareportal.profile.dto.response.PageDataProfileResponse;
 import com.mycareportal.profile.dto.response.PageDataResponse;
 import com.mycareportal.profile.dto.response.ProfileResponse;
@@ -26,6 +29,7 @@ import com.mycareportal.profile.exception.AppException;
 import com.mycareportal.profile.exception.ErrorCode;
 import com.mycareportal.profile.mapper.ProfileMapper;
 import com.mycareportal.profile.repository.ProfileRepository;
+import com.mycareportal.profile.service.kafka.KafkaProducerService;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +45,8 @@ public class ProfileService {
     ProfileMapper profileMapper;
     ObjectMapper objectMapper;
 
+    KafkaProducerService kafkaProducerService;
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -53,6 +59,8 @@ public class ProfileService {
 
         try {
             profileRequest = objectMapper.readValue(profileRequestJson, ProfileCreationRequest.class);
+
+            log.info("phoneNumber in profile service: {}", profileRequest.getPhoneNumber());
 
             // Convert the profileRequestJson to class ProfileCreationRequest
             Profile profile = profileMapper.toProfile(profileRequest);
@@ -74,6 +82,24 @@ public class ProfileService {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+    }
+
+    // Get All Profiles
+    public List<ProfileResponse> getAllProfiles() {
+
+        return profileRepository.findAll().stream()
+                .map(profile -> {
+                    ProfileResponse profileResponse = profileMapper.toProfileResponse(profile);
+
+                    byte[] avatarBytes = profile.getAvatar();
+
+                    String avatarBase64 =
+                            (avatarBytes != null) ? Base64.getEncoder().encodeToString(avatarBytes) : null;
+                    profileResponse.setAvatar(avatarBase64);
+
+                    return profileResponse;
+                })
+                .toList();
     }
 
     // Get Profiles
@@ -104,13 +130,49 @@ public class ProfileService {
         return getUsersAndSortBy(page, sortBy, order);
     }
 
-    public ProfileResponse getProfile(Long profileId) {
+    public ProfileResponse getProfileById(Long profileId) {
         return profileRepository
                 .findById(profileId)
                 .map(profileMapper::toProfileResponse)
                 .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
     }
 
+    // Update Profile
+    public ProfileResponse updateProfile(Long profileId, ProfileUpdateRequest request, MultipartFile avatarFile) {
+        var profile =
+                profileRepository.findById(profileId).orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
+
+        profile = profileMapper.toUpdateProfile(profile, request);
+
+        try {
+            if (avatarFile != null) {
+                profile.setAvatar(avatarFile.getBytes());
+            }
+
+            profile = profileRepository.save(profile);
+
+            byte[] avatarBytes = profile.getAvatar();
+            String avatarBase64 = (avatarBytes != null) ? Base64.getEncoder().encodeToString(avatarBytes) : null;
+
+            ProfileResponse profileResponse = profileMapper.toProfileResponse(profile);
+            profileResponse.setAvatar(avatarBase64);
+
+            KafkaProfileUpdateRequest kafkaRequest = profileMapper.toKafkaProfileUpdateRequest(profileResponse);
+
+            kafkaProducerService.sendProfileUpdatedEvent(KafkaMessage.<KafkaProfileUpdateRequest>builder()
+                    .type("ProfileUpdate")
+                    .payload(kafkaRequest)
+                    .build());
+
+            return profileResponse;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    // Delete Profile
     public void deleteProfile(Long profileId) {
         profileRepository.deleteById(profileId);
     }
@@ -148,7 +210,8 @@ public class ProfileService {
         return new PageDataProfileResponse(profilesResponse, pageDataResponse);
     }
 
-    // Custom query for sorting handle NULL ORDER by using entityManager.createNativeQuery()
+    // Custom query for sorting handle NULL ORDER by using
+    // entityManager.createNativeQuery()
     public Page<Profile> findAllSortedByField(String sortBy, String order, Pageable pageable) {
         String nullSortingOrder = ASCENDING.equalsIgnoreCase(order) ? "NULLS FIRST" : "NULLS LAST";
 

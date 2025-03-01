@@ -17,19 +17,12 @@ spring:
   main:
     allow-bean-definition-overriding: true
   kafka:
-    bootstrap-servers: localhost:9094
+    bootstrap-servers: localhost:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-    consumer:
-      group-id: profile-group
-      auto-offset-reset: earliest
-      key-serializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonDeserializer  
-      properties:
-        request.timeout.ms: 10000
-        connections.max.idle.ms: 10000
-        retry.backoff.ms: 1000
+      value-serializer: com.mycareportal.event.dto.KafkaMessageSerializer
+    topic:
+      profile-updated: profile-updated-topic
   servlet:
     multipart:
       enabled: true

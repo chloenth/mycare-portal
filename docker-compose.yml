@@ -1,17 +1,97 @@
-version: "3"
-name: mycareportal
+version: '2.2'
+
 services:
-  kafka:
-    image: 'bitnami/kafka:3.7.0'
-    container_name: kafka
-    hostname: kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    restart: always
+    networks:
+      - elastic-net
+    mem_limit: 512m        # Giới hạn 512MB RAM cho Zookeeper
+    cpus: 0.5              # Giới hạn 0.5 CPU cho Zookeeper
     ports:
-       - "9094:9094" # Map Docker container port 9094 to host port 9094
+      - "2181:2181"
     environment:
-      - KAFKA_CFG_NODE_ID=0
-      - KAFKA_CFG_PROCESS_ROLES=controller,broker
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    restart: always
+    networks:
+      - elastic-net
+    mem_limit: 1g          # Giới hạn 1GB RAM cho Kafka
+    cpus: 0.5              # Giới hạn 0.5 CPU cho Kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2
+    container_name: elasticsearch
+    restart: always
+    networks:
+      - elastic-net
+    mem_limit: 2g          # Giới hạn 2GB RAM cho Elasticsearch
+    cpus: 0.5              # Giới hạn 0.5 CPU cho Elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g   # Giới hạn bộ nhớ heap cho Elasticsearch (1GB)
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.6.2
+    container_name: kibana
+    restart: always
+    networks:
+      - elastic-net
+    mem_limit: 1g          # Giới hạn 1GB RAM cho Kibana
+    cpus: 0.5              # Giới hạn 0.5 CPU cho Kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+
+  postgres-db1:
+    image: postgres:latest
+    container_name: postgres-db1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: mycare_identity
+    ports:
+      - "5432:5432"
+    mem_limit: 512m
+    cpus: 0.5
+    networks:
+      - pg-network
+
+  postgres-db2:
+    image: postgres:latest
+    container_name: postgres-db2
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: mycare_profile
+    ports:
+      - "5433:5432"
+    mem_limit: 512m
+    cpus: 0.5
+    networks:
+      - pg-network
+
+networks:
+  elastic-net:
+    driver: bridge
+  pg-network:
+    driver: bridge

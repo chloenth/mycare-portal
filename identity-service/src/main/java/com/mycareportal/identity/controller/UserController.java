@@ -3,20 +3,20 @@ package com.mycareportal.identity.controller;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.mycareportal.identity.dto.request.user.UserCreationRequest;
-import com.mycareportal.identity.dto.request.user.UserUpdateRequest;
+import com.mycareportal.identity.dto.request.user.UsernameUpdateRequest;
+import com.mycareportal.identity.dto.request.user.PasswordUpdateRequest;
 import com.mycareportal.identity.dto.response.api.ApiResponse;
-import com.mycareportal.identity.dto.response.pagedata.user.PageDataUserResponse;
 import com.mycareportal.identity.dto.response.pagedata.user.UserWithProfileResponse;
 import com.mycareportal.identity.dto.response.user.UserResponse;
 import com.mycareportal.identity.service.UserService;
@@ -37,10 +37,14 @@ public class UserController {
 
 	@PostMapping(value = "/registration", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json")
 	ApiResponse<UserWithProfileResponse> createUser(@Valid @RequestPart("user") UserCreationRequest userRequest,
-			@RequestPart("avatar") MultipartFile avatarFile) {
+			@RequestPart(value="avatar", required=false) MultipartFile avatarFile) {
+		
+		if(avatarFile != null) {
+			log.info("File uploaded: Name = {}, Type = {}, Size = {} bytes", avatarFile.getOriginalFilename(),
+					avatarFile.getContentType(), avatarFile.getSize());
+		}
 
-		log.info("File uploaded: Name = {}, Type = {}, Size = {} bytes", avatarFile.getOriginalFilename(),
-				avatarFile.getContentType(), avatarFile.getSize());
+		
 
 		return ApiResponse.<UserWithProfileResponse>builder().result(userService.createUser(userRequest, avatarFile))
 				.build();
@@ -52,15 +56,15 @@ public class UserController {
 //	}
 
 	// Get Paged User with Profile
-	@GetMapping
-	ApiResponse<PageDataUserResponse> getPagedUsersWithProfile(@RequestParam(defaultValue = "1") int page,
-			@RequestParam(defaultValue = "username") String sortBy, @RequestParam(defaultValue = "asc") String order) {
-		
-		log.info("in controller sortBy: {}", sortBy);
-		
-		return ApiResponse.<PageDataUserResponse>builder().result(userService.getUsersWithProfile(page - 1, sortBy, order))
-				.build();
-	}
+//	@GetMapping
+//	ApiResponse<PageDataUserResponse> getPagedUsersWithProfile(@RequestParam(defaultValue = "1") int page,
+//			@RequestParam(defaultValue = "username") String sortBy, @RequestParam(defaultValue = "asc") String order) {
+//
+//		log.info("in controller sortBy: {}", sortBy);
+//
+//		return ApiResponse.<PageDataUserResponse>builder()
+//				.result(userService.getUsersWithProfile(page - 1, sortBy, order)).build();
+//	}
 
 	@GetMapping("/my-info")
 	ApiResponse<UserResponse> getMyInfo() {
@@ -68,9 +72,18 @@ public class UserController {
 		return ApiResponse.<UserResponse>builder().result(userService.getMyInfo()).build();
 	}
 
-	@PutMapping("/{userId}")
-	ApiResponse<UserResponse> updateUser(@PathVariable Long userId, @RequestBody @Valid UserUpdateRequest request) {
-		return ApiResponse.<UserResponse>builder().result(userService.updateUser(userId, request)).build();
+	@PutMapping("/{userId}/change-username")
+	ApiResponse<UserResponse> updateUser(@PathVariable Long userId, @RequestBody UsernameUpdateRequest request) {
+		log.info("request: {}", request);
+
+		return ApiResponse.<UserResponse>builder().result(userService.updateUsername(userId, request)).build();
+	}
+
+	@PutMapping("/{userId}/change-password")
+	ApiResponse<UserResponse> updateUser(@PathVariable Long userId, @RequestBody PasswordUpdateRequest request) {
+		log.info("request: {}", request);
+
+		return ApiResponse.<UserResponse>builder().result(userService.updatePassword(userId, request)).build();
 	}
 
 	@DeleteMapping("/{userId}")

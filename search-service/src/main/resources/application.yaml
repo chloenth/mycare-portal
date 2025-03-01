@@ -1,0 +1,41 @@
+server:
+  port: 8084
+  servlet:
+    context-path: /search
+
+app:
+  services:
+    identity: http://localhost:8080/identity
+    profile: http://localhost:8081/profile
+    
+spring:
+  elasticsearch:
+    rest:
+      uris: http://elasticsearch:9200
+  data:
+    elasticsearch:
+      cluster-name: docker-cluster
+      cluster-nodes: elasticsearch:9200
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id:
+        user-created: user-creation-group
+        username-updated: username-update-group
+        profile-updated: profile-update-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: com.mycareportal.event.KafkaMessageDeserializer
+      enable-auto-commit: false
+    topic:
+      user-profile-created: user-profile-created-topic
+      username-updated: username-updated-topic
+      profile-updated: profile-updated-topic
+    listener:
+      enable-auto-commit: false
+      ack-mode: manual  # Đảm bảo chế độ ack là thủ công
+      backoff:
+        max-attempts: 5
+        interval: 2000  # 2 giây giữa các lần thử lại
+    properties:
+        spring.json.trusted.packages: "*"
+        

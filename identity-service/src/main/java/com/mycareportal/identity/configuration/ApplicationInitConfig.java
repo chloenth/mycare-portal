@@ -11,6 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mycareportal.identity.constant.PredefinedRole;
 import com.mycareportal.identity.dto.request.profile.ProfileCreationRequest;
+import com.mycareportal.identity.dto.response.api.ApiResponse;
+import com.mycareportal.identity.dto.response.pagedata.profile.ProfileResponse;
 import com.mycareportal.identity.entity.Role;
 import com.mycareportal.identity.entity.User;
 import com.mycareportal.identity.repository.RoleRepository;
@@ -57,14 +59,25 @@ public class ApplicationInitConfig {
 				User user = User.builder().username(ADMIN_USERNAME).password(passwordEncoder.encode(ADMIN_PASSWORD))
 						.roles(roles).build();
 				user = userRepository.save(user);
-				
+
 				// create profile for account admin
 				ProfileCreationRequest profileCreationRequest = new ProfileCreationRequest();
 				profileCreationRequest.setUserId(user.getId());
-				
+
 				String profileRequestJson = objectMapper.writeValueAsString(profileCreationRequest);
-				
-				profileClient.createProfile(null, profileRequestJson);
+
+				try {
+					ApiResponse<ProfileResponse> profileResponse = profileClient.createProfile(null,
+							profileRequestJson);
+					
+					log.info("profileResponse: {}", profileResponse);
+				} catch (Exception e) {
+					userRepository.delete(user);
+
+					log.warn("failed to create admin account, try again...");
+					throw e;
+				}
+
 				log.warn("admin user has been created with default password: admin, please change it");
 			}
 			log.info("Application initialization completed .....");

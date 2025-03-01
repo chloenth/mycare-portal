@@ -2,6 +2,8 @@ package com.mycareportal.profile.dto.request;
 
 import java.time.LocalDate;
 
+import jakarta.validation.constraints.NotEmpty;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,7 +17,9 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ProfileCreationRequest {
+    @NotEmpty
     Long userId;
+
     String fullName;
     String email;
     LocalDate dob;

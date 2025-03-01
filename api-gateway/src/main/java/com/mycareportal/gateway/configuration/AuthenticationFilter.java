@@ -35,7 +35,8 @@ import reactor.core.publisher.Mono;
 public class AuthenticationFilter implements GlobalFilter, Ordered {
 
 	@NonFinal
-	private String[] publicEndpoints = { "/identity/auth/.*", "/identity/users/registration" };
+	private String[] publicEndpoints = { "/identity/auth/.*", "/identity/users/registration", "/identity/kafka/send",
+			"/search/kafka/messages" };
 
 	@NonFinal
 	@Value("${app.api-prefix}")
@@ -53,7 +54,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 			log.info("Enter authentication filter, public endpoint....");
 			return chain.filter(exchange);
 		}
-		
+
 		log.info("Enter authentication filter, private endpoint....");
 
 		HttpCookie accessTokenCookie = exchange.getRequest().getCookies().getFirst("accessToken"); // Get the first
