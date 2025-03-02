@@ -10,5 +10,5 @@ import com.mycareportal.search.entity.UserProfileIndex;
 public interface UserProfileRepository extends ElasticsearchRepository<UserProfileIndex, Long> {
     
 	Optional<UserProfileIndex> findByProfileId(Long profileId);
-
+	Optional<UserProfileIndex> findByUsername(String username);
 }

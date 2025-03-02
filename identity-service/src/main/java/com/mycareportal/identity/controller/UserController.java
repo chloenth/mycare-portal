@@ -37,14 +37,12 @@ public class UserController {
 
 	@PostMapping(value = "/registration", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json")
 	ApiResponse<UserWithProfileResponse> createUser(@Valid @RequestPart("user") UserCreationRequest userRequest,
-			@RequestPart(value="avatar", required=false) MultipartFile avatarFile) {
-		
-		if(avatarFile != null) {
+			@RequestPart(value = "avatar", required = false) MultipartFile avatarFile) {
+
+		if (avatarFile != null) {
 			log.info("File uploaded: Name = {}, Type = {}, Size = {} bytes", avatarFile.getOriginalFilename(),
 					avatarFile.getContentType(), avatarFile.getSize());
 		}
-
-		
 
 		return ApiResponse.<UserWithProfileResponse>builder().result(userService.createUser(userRequest, avatarFile))
 				.build();
@@ -53,17 +51,6 @@ public class UserController {
 //	@PostMapping("/registration-doctor")
 //	ApiResponse<UserResponse> createUserWithDoctorRole(@RequestBody @Valid UserCreationRequest request) {
 //		return ApiResponse.<UserResponse>builder().result(userService.createUserWithDoctorRole(request)).build();
-//	}
-
-	// Get Paged User with Profile
-//	@GetMapping
-//	ApiResponse<PageDataUserResponse> getPagedUsersWithProfile(@RequestParam(defaultValue = "1") int page,
-//			@RequestParam(defaultValue = "username") String sortBy, @RequestParam(defaultValue = "asc") String order) {
-//
-//		log.info("in controller sortBy: {}", sortBy);
-//
-//		return ApiResponse.<PageDataUserResponse>builder()
-//				.result(userService.getUsersWithProfile(page - 1, sortBy, order)).build();
 //	}
 
 	@GetMapping("/my-info")

@@ -137,6 +137,22 @@ public class ProfileService {
                 .orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
     }
 
+    // Get Profile By UserId
+    //    public ProfileResponse getProfileByUserId(Long userId) {
+    //        var profile =
+    //                profileRepository.findByUserId(userId).orElseThrow(() -> new
+    // AppException(ErrorCode.PROFILE_NOT_FOUND));
+    //
+    //        ProfileResponse profileResponse = profileMapper.toProfileResponse(profile);
+    //
+    //        byte[] avatarBytes = profile.getAvatar();
+    //        String avatarBase64 = (avatarBytes != null) ? Base64.getEncoder().encodeToString(avatarBytes) : null;
+    //
+    //        profileResponse.setAvatar(avatarBase64);
+    //
+    //        return profileResponse;
+    //    }
+
     // Update Profile
     public ProfileResponse updateProfile(Long profileId, ProfileUpdateRequest request, MultipartFile avatarFile) {
         var profile =

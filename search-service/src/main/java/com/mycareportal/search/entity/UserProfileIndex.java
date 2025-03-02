@@ -56,6 +56,10 @@ public class UserProfileIndex {
 	}
 
 	public String getDobAsString() {
+		if(this.dob == null) {
+			return null;
+		}
+		
 		return Instant.ofEpochMilli(this.dob).atZone(ZoneId.systemDefault()).toLocalDate().toString();
 	}
 

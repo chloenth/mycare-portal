@@ -1,9 +1,6 @@
 package com.mycareportal.identity.dto.response.authentication;
 
-import java.util.Set;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.mycareportal.identity.dto.response.role.RoleResponse;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -23,6 +20,4 @@ public class AuthenticationResponse {
 	
 	@JsonIgnore
 	String refreshToken;
-	
-	Set<RoleResponse> roles;
 }

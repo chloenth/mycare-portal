@@ -12,6 +12,8 @@ spring:
   elasticsearch:
     rest:
       uris: http://elasticsearch:9200
+      username: elastic
+      password: elasticsearch
   data:
     elasticsearch:
       cluster-name: docker-cluster
@@ -38,4 +40,14 @@ spring:
         interval: 2000  # 2 giây giữa các lần thử lại
     properties:
         spring.json.trusted.packages: "*"
+  redis:
+    host: localhost       # Địa chỉ Redis server
+    port: 6379           # Cổng Redis (mặc định là 6379)
+    password: redispassword # Nếu có mật khẩu
+    jedis:
+      pool:
+        max-active: 10    # Tối đa kết nối Redis
+        max-idle: 5
+        min-idle: 1
+        max-wait: 1000ms    # Nếu không tìm thấy, sẽ chờ mãi
         

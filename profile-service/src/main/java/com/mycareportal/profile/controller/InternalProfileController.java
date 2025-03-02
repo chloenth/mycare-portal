@@ -47,6 +47,13 @@ public class InternalProfileController {
                 .build();
     }
 
+    //    @GetMapping("/{userId}")
+    //    ApiResponse<ProfileResponse> getProfileByUserId(@PathVariable Long userId) {
+    //        return ApiResponse.<ProfileResponse>builder()
+    //                .result(userProfileService.getProfileByUserId(userId))
+    //                .build();
+    //    }
+
     @DeleteMapping("/{profileId}")
     ApiResponse<Void> deleteProfile(@PathVariable Long profileId) {
         userProfileService.deleteProfile(profileId);

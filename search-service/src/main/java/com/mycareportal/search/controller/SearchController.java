@@ -36,7 +36,12 @@ public class SearchController {
 
 	@GetMapping("/{userId}")
 	public ApiResponse<UserProfileResponse> getUserById(@PathVariable Long userId) {
-
 		return ApiResponse.<UserProfileResponse>builder().result(searchService.getUserById(userId)).build();
 	}
+
+	@GetMapping("/my-info")
+	public ApiResponse<UserProfileResponse> getUserById() {
+		return ApiResponse.<UserProfileResponse>builder().result(searchService.getMyInfo()).build();
+	}
+
 }

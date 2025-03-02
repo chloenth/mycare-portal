@@ -44,7 +44,8 @@ services:
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1g -Xmx1g   # Giới hạn bộ nhớ heap cho Elasticsearch (1GB)
-      - xpack.security.enabled=false
+      - ELASTIC_PASSWORD=elasticsearch
+      - xpack.security.enabled=true
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -59,6 +60,8 @@ services:
     cpus: 0.5              # Giới hạn 0.5 CPU cho Kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=elasticsearch
     ports:
       - "5601:5601"
 
@@ -89,6 +92,18 @@ services:
     cpus: 0.5
     networks:
       - pg-network
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    networks:
+      - elastic-net
+    mem_limit: 512m  # Optional: set memory limit for Redis container
+    cpus: 0.5        # Optional: limit CPU usage for Redis container
+    ports:
+      - "6379:6379"   # Expose Redis on port 6379
+    command: redis-server --requirepass redispassword
 
 networks:
   elastic-net:

@@ -3,6 +3,9 @@ package com.mycareportal.search.configuration;
 import java.io.IOException;
 
 import org.apache.http.HttpHost;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.client.RestClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,18 +24,25 @@ public class ElasticsearchClientConfig {
 	// Define the ElasticsearchClient as a Spring Bean
 	@Bean
 	ElasticsearchClient elasticsearchClient() {
-		// Step 1: Create the RestClient (used for HTTP communication)
-		RestClient restClient = RestClient.builder(new HttpHost("localhost", 9200, "http")).build();
+		// Cấu hình thông tin xác thực
+		CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+		credentialsProvider.setCredentials(new org.apache.http.auth.AuthScope("localhost", 9200),
+				new UsernamePasswordCredentials("elastic", "elasticsearch") // username và password
+		);
 
-		// Step 2: Set up the RestClientTransport to enable communication with
+		// Tạo HttpClient với thông tin xác thực
+		RestClient restClient = RestClient.builder(new HttpHost("localhost", 9200, "http"))
+				.setHttpClientConfigCallback(
+						httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider))
+				.build();
+
+		// Set up the RestClientTransport to enable communication with
 		// Elasticsearch
 		RestClientTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
 
-		// Step 3: Initialize and return the ElasticsearchClient
+		// Step 4: Initialize and return the ElasticsearchClient
 		return new ElasticsearchClient(transport);
 	}
-
-
 
 	// Method to close the client and clean up resources
 	static void closeClient() throws IOException {

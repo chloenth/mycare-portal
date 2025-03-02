@@ -2,14 +2,7 @@ package com.mycareportal.identity.service;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,10 +18,7 @@ import com.mycareportal.identity.dto.request.user.UserCreationRequest;
 import com.mycareportal.identity.dto.request.user.UsernameUpdateRequest;
 import com.mycareportal.identity.dto.request.userprofile.UserProfileRequest;
 import com.mycareportal.identity.dto.response.api.ApiResponse;
-import com.mycareportal.identity.dto.response.pagedata.PageDataResponse;
-import com.mycareportal.identity.dto.response.pagedata.profile.PageDataProfileResponse;
 import com.mycareportal.identity.dto.response.pagedata.profile.ProfileResponse;
-import com.mycareportal.identity.dto.response.pagedata.user.PageDataUserResponse;
 import com.mycareportal.identity.dto.response.pagedata.user.UserWithProfileResponse;
 import com.mycareportal.identity.dto.response.user.UserResponse;
 import com.mycareportal.identity.entity.User;
@@ -43,7 +33,6 @@ import com.mycareportal.identity.repository.UserRepository;
 import com.mycareportal.identity.repository.httpclient.DoctorClient;
 import com.mycareportal.identity.repository.httpclient.PatientClient;
 import com.mycareportal.identity.repository.httpclient.ProfileClient;
-import com.mycareportal.identity.repository.httpclient.SearchClient;
 import com.mycareportal.identity.service.kafka.KafkaProducerService;
 
 import lombok.AccessLevel;
@@ -74,7 +63,6 @@ public class UserService {
 
 	DoctorMapper doctorMapper;
 	DoctorClient doctorClient;
-	SearchClient searchClient;
 
 	PatientMapper patientMapper;
 	PatientClient patientClient;
@@ -206,42 +194,6 @@ public class UserService {
 		return userRepository.findAll().stream().map(userMapper::toUserResponse).toList();
 	}
 
-	// get paged users
-//	@PreAuthorize("hasRole('ADMIN')")
-//	public PageDataUserResponse getUsersWithProfile(int page, String sortBy, String order) {
-//		var authentication = SecurityContextHolder.getContext().getAuthentication();
-//		log.info("authentication: {}", authentication);
-//		log.info("name: {}", authentication.getName());
-//		log.info("authorities: {}", authentication.getAuthorities());
-//
-//		// Sort By Username
-//		if (USERNAME.equals(sortBy)) {
-//			log.info("sortBy username: {}", sortBy);
-//			return getUsersAndSortByUsername(page, order);
-//		}
-//
-//		log.info("sortBy: {}", sortBy);
-//		log.info("page: {}", page);
-//
-//		// Sort By pther fields from Profile Service
-//		ApiResponse<PageDataProfileResponse> pageDataProfileResponse = profileClient.getProfiles(null, page, sortBy,
-//				order);
-//		List<ProfileResponse> profilesResponse = pageDataProfileResponse.getResult().getProfileResponse();
-//
-//		List<Long> userIds = profilesResponse.stream().map(ProfileResponse::getUserId).toList();
-//
-//		List<User> users = userRepository.findAllById(userIds);
-//
-//		Map<Long, User> userMap = users.stream().collect(Collectors.toMap(User::getId, Function.identity()));
-//
-//		List<UserWithProfileResponse> userWithProfileResponses = profilesResponse.stream().map(profileResponse -> {
-//			User user = userMap.get(profileResponse.getUserId());
-//			return userMapper.toUserWithProfileResponse(user, profileResponse);
-//		}).toList();
-//
-//		return new PageDataUserResponse(userWithProfileResponses, pageDataProfileResponse.getResult().getPageData());
-//	}
-
 	public UserResponse getMyInfo() {
 		log.info("access to user service myinfo");
 		var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -272,8 +224,8 @@ public class UserService {
 		UsernameKafkaUpdateRequest kafkaRequest = UsernameKafkaUpdateRequest.builder()
 				.username(userResponse.getUsername()).userId(userResponse.getId()).build();
 
-		kafkaProducerService
-				.sendUsernameUpdatedEvent(KafkaMessage.<UsernameKafkaUpdateRequest>builder().type("UsernameUpdate").payload(kafkaRequest).build());
+		kafkaProducerService.sendUsernameUpdatedEvent(KafkaMessage.<UsernameKafkaUpdateRequest>builder()
+				.type("UsernameUpdate").payload(kafkaRequest).build());
 
 		return userResponse;
 	}
@@ -297,46 +249,4 @@ public class UserService {
 		userRepository.deleteById(userId);
 	}
 
-	// Get users and sort by username
-	private PageDataUserResponse getUsersAndSortByUsername(int page, String order) {
-		Sort sort;
-
-		if (ASCENDING.equalsIgnoreCase(order)) {
-			sort = Sort.by(Sort.Direction.ASC, USERNAME);
-
-		} else {
-			sort = Sort.by(Sort.Direction.DESC, USERNAME);
-		}
-
-		Pageable pageable = PageRequest.of(page, PAGE_SIZE, sort);
-		Page<User> pageData = userRepository.findAll(pageable);
-
-		List<User> users = pageData.getContent();
-
-		List<Long> userIds = pageData.get().map(User::getId).toList();
-
-		ApiResponse<PageDataProfileResponse> pageDataProfileResponse = profileClient.getProfiles(userIds, 1, "",
-				ASCENDING);
-		List<ProfileResponse> profilesResponse = pageDataProfileResponse.getResult().getProfileResponse();
-
-//		log.info("profilesResponse: {}", profilesResponse);
-
-		Map<Long, ProfileResponse> profileMap = profilesResponse.stream()
-				.collect(Collectors.toMap(ProfileResponse::getUserId, Function.identity()));
-
-		List<UserWithProfileResponse> userWithProfileResponse = users.stream().map(user -> {
-			ProfileResponse profile = profileMap.get(user.getId());
-			return userMapper.toUserWithProfileResponse(user, profile);
-		}).toList();
-
-		int currentPage = pageData.getNumber() + 1;
-		int totalPages = pageData.getTotalPages();
-
-		int startPage = Math.max(1, currentPage - 3);
-		int endPage = Math.min(totalPages, startPage + 5);
-
-		PageDataResponse pageDataResponse = new PageDataResponse(currentPage, totalPages, startPage, endPage);
-
-		return new PageDataUserResponse(userWithProfileResponse, pageDataResponse);
-	}
 }

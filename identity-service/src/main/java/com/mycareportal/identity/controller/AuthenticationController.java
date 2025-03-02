@@ -1,8 +1,7 @@
 package com.mycareportal.identity.controller;
 
-
-
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +16,7 @@ import com.mycareportal.identity.dto.response.authentication.IntrospectResponse;
 import com.mycareportal.identity.service.AuthenticationService;
 
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +32,7 @@ public class AuthenticationController {
 	AuthenticationService authenticationService;
 
 	@PostMapping("/token")
-	ApiResponse<AuthenticationResponse> authenticateUser(@RequestBody AuthenticationRequest request,
-			HttpServletResponse httpResponse) {
+	ApiResponse<Void> authenticateUser(@RequestBody AuthenticationRequest request, HttpServletResponse httpResponse) {
 		AuthenticationResponse authResponse = authenticationService.authenticate(request);
 
 		Cookie accessTokenCookie = new Cookie("accessToken", authResponse.getAccessToken());
@@ -60,7 +59,7 @@ public class AuthenticationController {
 		httpResponse.addCookie(accessTokenCookie);
 		httpResponse.addCookie(refreshTokenCookie);
 
-		return ApiResponse.<AuthenticationResponse>builder().result(authResponse).build();
+		return ApiResponse.<Void>builder().build();
 	}
 
 	@PostMapping("/introspect")
@@ -71,7 +70,7 @@ public class AuthenticationController {
 	@PostMapping("/refresh")
 	ApiResponse<AuthenticationResponse> refreshToken(@CookieValue(name = "refreshToken") String refreshToken,
 			HttpServletResponse httpResponse) {
-		
+
 		log.info("refreshToken: {}", refreshToken);
 
 		AuthenticationResponse authResponse = authenticationService.refreshToken(refreshToken);
@@ -103,9 +102,34 @@ public class AuthenticationController {
 		return ApiResponse.<AuthenticationResponse>builder().result(authResponse).build();
 	}
 
-	@PostMapping("/logout")
-	ApiResponse<Void> logout(@RequestBody LogoutRequest request) {
-		authenticationService.logout(request);
+	@GetMapping("/logout")
+	ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse httpResponse) {
+		// Create a cookie to remove the token
+		Cookie accessTokenCookie = new Cookie("accessToken", null); // "token" is the name of the cookie
+		accessTokenCookie.setPath("/"); // Set the path to the root so the cookie is valid across the whole site
+		accessTokenCookie.setHttpOnly(true); // Make the cookie inaccessible to JavaScript (security)
+		accessTokenCookie.setSecure(true); // Only send over HTTPS (optional but recommended)
+		accessTokenCookie.setMaxAge(0); // Set max age to 0 to expire the cookie immediately
+		accessTokenCookie.setDomain("localhost"); // Set the domain if necessary (optional)
+
+		// Add the cookie to the response
+		httpResponse.addHeader("Set-Cookie",
+				"accessToken=" + accessTokenCookie.getValue() + "; HttpOnly; Secure; SameSite=None; Path=/");
+		httpResponse.addCookie(accessTokenCookie);
+
+		// Get all cookies from the request
+		Cookie[] cookies = request.getCookies();
+
+		if (cookies != null) {
+			for (Cookie cookie : cookies) {
+				// Check if the cookie's name is "token"
+				if ("refreshToken".equals(cookie.getName())) {
+					authenticationService.logout(LogoutRequest.builder().refreshToken(cookie.getValue()).build());
+
+				}
+			}
+		}
+
 		return ApiResponse.<Void>builder().build();
 	}
 }

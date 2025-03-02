@@ -4,7 +4,6 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
 
@@ -17,10 +16,8 @@ import org.springframework.util.CollectionUtils;
 import com.mycareportal.identity.dto.request.authentication.AuthenticationRequest;
 import com.mycareportal.identity.dto.request.authentication.IntrospectRequest;
 import com.mycareportal.identity.dto.request.authentication.LogoutRequest;
-import com.mycareportal.identity.dto.request.authentication.RefreshRequest;
 import com.mycareportal.identity.dto.response.authentication.AuthenticationResponse;
 import com.mycareportal.identity.dto.response.authentication.IntrospectResponse;
-import com.mycareportal.identity.dto.response.role.RoleResponse;
 import com.mycareportal.identity.entity.RefreshToken;
 import com.mycareportal.identity.entity.User;
 import com.mycareportal.identity.exception.AppException;
@@ -28,6 +25,7 @@ import com.mycareportal.identity.exception.ErrorCode;
 import com.mycareportal.identity.mapper.RoleMapper;
 import com.mycareportal.identity.repository.RefreshTokenRepository;
 import com.mycareportal.identity.repository.UserRepository;
+import com.mycareportal.identity.repository.httpclient.ProfileClient;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -52,6 +50,7 @@ public class AuthenticationService {
 	RefreshTokenRepository refreshTokenRepository;
 	PasswordEncoder passwordEncoder;
 	RoleMapper roleMapper;
+	ProfileClient profileClient;
 
 	@NonFinal
 	@Value("${jwt.signerKey}")
@@ -81,9 +80,8 @@ public class AuthenticationService {
 		// generate refresh token
 		String refreshToken = generateRefreshToken(user);
 
-		Set<RoleResponse> roles = roleMapper.toSetRoleResponse(user.getRoles());
+		return AuthenticationResponse.builder().accessToken(token).refreshToken(refreshToken).build();
 
-		return AuthenticationResponse.builder().accessToken(token).refreshToken(refreshToken).roles(roles).build();
 	}
 
 	// introspect access token
@@ -101,8 +99,6 @@ public class AuthenticationService {
 
 	// refresh access token
 	public AuthenticationResponse refreshToken(String refreshTokenString) {
-//		var token = request.getRefreshToken();
-
 		log.info("refreshTokenString: {}", refreshTokenString);
 
 		var existingRefreshToken = refreshTokenRepository.findByToken(refreshTokenString);
@@ -116,12 +112,9 @@ public class AuthenticationService {
 		refreshToken.setExpiryTime(Instant.now().plus(refreshTokenDuration, ChronoUnit.SECONDS));
 		refreshToken = refreshTokenRepository.save(refreshToken);
 
-		User user = refreshToken.getUser();
+		var accessToken = generateToken(refreshToken.getUser());
 
-		var accessToken = generateToken(user);
-
-		return AuthenticationResponse.builder().accessToken(accessToken).refreshToken(refreshToken.getToken())
-				.roles(roleMapper.toSetRoleResponse(user.getRoles())).build();
+		return AuthenticationResponse.builder().accessToken(accessToken).refreshToken(refreshToken.getToken()).build();
 	}
 
 	@Transactional

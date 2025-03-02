@@ -16,9 +16,8 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.mycareportal.event.KafkaMessage;
 import com.mycareportal.search.dto.request.ProfileUpdateRequest;
@@ -46,8 +45,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
-@RestController
-@RequestMapping("/users")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
@@ -55,6 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SearchService {
 	UserProfileRepository userProfileRepository;
 	ElasticsearchClient elasticsearchClient;
+	RedisCacheService redisCacheService;
 
 	UserProfileMapper userProfileMapper;
 
@@ -101,7 +99,7 @@ public class SearchService {
 
 		try {
 			searchResponse = elasticsearchClient.search(searchRequest, Map.class);
-			
+
 			// Extract the hits (documents) from the response
 			List<Map<String, Object>> searchResults = searchResponse.hits().hits().stream().map(hit -> {
 				Map<String, Object> source = hit.source();
@@ -202,9 +200,9 @@ public class SearchService {
 
 			var index = userProfileRepository.findById(usernameUpdateRequest.getUserId())
 					.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-			
+
 			log.info("index: {index}", index);
-			
+
 			index.setUsername(usernameUpdateRequest.getUsername());
 
 			updateUserProfile(index);
@@ -222,7 +220,7 @@ public class SearchService {
 			throw new RuntimeException("Unexpected error", e);
 		}
 	}
-	
+
 	@KafkaListener(topics = "${spring.kafka.topic.profile-updated}", groupId = "${spring.kafka.consumer.group-id.profile-updated}")
 	public void listenUpdatedProfile(ConsumerRecord<String, KafkaMessage<ProfileUpdateRequest>> consumerRecord,
 			Acknowledgment acknowledgment) {
@@ -235,9 +233,9 @@ public class SearchService {
 
 			UserProfileIndex index = userProfileRepository.findByProfileId(request.getId())
 					.orElseThrow(() -> new AppException(ErrorCode.PROFILE_NOT_FOUND));
-			
+
 			log.info("index: {index}", index);
-			
+
 			index = userProfileMapper.toUserProfileUpdateIndex(index, request);
 			index.setDobToLong(request.getDob());
 
@@ -261,15 +259,34 @@ public class SearchService {
 	public void updateUserProfile(UserProfileIndex index) {
 		userProfileRepository.save(index);
 	}
-	
+
 //	Get users By Id
 	public UserProfileResponse getUserById(Long id) {
-		var index = userProfileRepository.findById(id)
-				.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-		
+		var index = userProfileRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
 		UserProfileResponse userProfileResponse = userProfileMapper.toUserProfileResponse(index);
 		userProfileResponse.setDob(index.getDobAsString());
-		
+
+		return userProfileResponse;
+	}
+
+//	Get users By username
+	public UserProfileResponse getMyInfo() {
+		var authentication = SecurityContextHolder.getContext().getAuthentication();
+		var username = authentication.getName();
+
+		// Kiểm tra xem thông tin người dùng có trong Redis không
+		if (redisCacheService.isUserProfileInCache(username)) {
+			return redisCacheService.getUserProfileFromCache(username); // Trả về dữ liệu từ Redis
+
+		}
+
+		var index = userProfileRepository.findByUsername(username)
+				.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+		UserProfileResponse userProfileResponse = userProfileMapper.toUserProfileResponse(index);
+		userProfileResponse.setDob(index.getDobAsString());
+
 		return userProfileResponse;
 	}
 }
