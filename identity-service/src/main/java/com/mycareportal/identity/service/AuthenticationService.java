@@ -80,11 +80,10 @@ public class AuthenticationService {
 		String token = generateToken(user);
 		// generate refresh token
 		String refreshToken = generateRefreshToken(user);
-		
+
 		Set<RoleResponse> roles = roleMapper.toSetRoleResponse(user.getRoles());
 
-		return AuthenticationResponse.builder().accessToken(token).refreshToken(refreshToken).roles(roles)
-				.build();
+		return AuthenticationResponse.builder().accessToken(token).refreshToken(refreshToken).roles(roles).build();
 	}
 
 	// introspect access token
@@ -101,12 +100,12 @@ public class AuthenticationService {
 	}
 
 	// refresh access token
-	public AuthenticationResponse refreshToken(RefreshRequest request) {
-		var token = request.getRefreshToken();
+	public AuthenticationResponse refreshToken(String refreshTokenString) {
+//		var token = request.getRefreshToken();
 
-		log.info("token: {}", token);
+		log.info("refreshTokenString: {}", refreshTokenString);
 
-		var existingRefreshToken = refreshTokenRepository.findByToken(token);
+		var existingRefreshToken = refreshTokenRepository.findByToken(refreshTokenString);
 		if (existingRefreshToken.isEmpty() || existingRefreshToken.get().getExpiryTime().isBefore(Instant.now())) {
 			throw new AppException(ErrorCode.INVALID_REFRESH_TOKEN);
 		}
@@ -117,9 +116,12 @@ public class AuthenticationService {
 		refreshToken.setExpiryTime(Instant.now().plus(refreshTokenDuration, ChronoUnit.SECONDS));
 		refreshToken = refreshTokenRepository.save(refreshToken);
 
-		var accessToken = generateToken(refreshToken.getUser());
+		User user = refreshToken.getUser();
 
-		return AuthenticationResponse.builder().accessToken(accessToken).refreshToken(refreshToken.getToken()).build();
+		var accessToken = generateToken(user);
+
+		return AuthenticationResponse.builder().accessToken(accessToken).refreshToken(refreshToken.getToken())
+				.roles(roleMapper.toSetRoleResponse(user.getRoles())).build();
 	}
 
 	@Transactional
