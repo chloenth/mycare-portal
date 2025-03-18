@@ -50,27 +50,27 @@ services:
       - "9200:9200"
       - "9300:9300"
 
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.6.2
-    container_name: kibana
-    restart: always
-    networks:
-      - elastic-net
-    mem_limit: 1g          # Giới hạn 1GB RAM cho Kibana
-    cpus: 0.5              # Giới hạn 0.5 CPU cho Kibana
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - ELASTICSEARCH_USERNAME=elastic
-      - ELASTICSEARCH_PASSWORD=elasticsearch
-    ports:
-      - "5601:5601"
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:8.6.2
+  #   container_name: kibana
+  #   restart: always
+  #   networks:
+  #     - elastic-net
+  #   mem_limit: 1g          # Giới hạn 1GB RAM cho Kibana
+  #   cpus: 0.5              # Giới hạn 0.5 CPU cho Kibana
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #     - ELASTICSEARCH_USERNAME=elastic
+  #     - ELASTICSEARCH_PASSWORD=elasticsearch
+  #   ports:
+  #     - "5601:5601"
 
   postgres-db1:
     image: postgres:latest
     container_name: postgres-db1
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: mycare_identity
     ports:
       - "5432:5432"
@@ -83,8 +83,8 @@ services:
     image: postgres:latest
     container_name: postgres-db2
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: mycare_profile
     ports:
       - "5433:5432"
