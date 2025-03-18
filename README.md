@@ -85,7 +85,16 @@ This project is the backend for a Hospital Management System built using a micro
 
 ### Installation
 
-**Step 1: Set up environment variables**
+**Step 1: Clone the Repository**
+
+Clone the repository from GitHub to your local machine and navigate into the project directory:
+
+```bash
+git clone https://github.com/chloenth/mycare-portal.git
+cd mycare-portal
+```
+
+**Step 2: Set up environment variables**
 
 Create a `.env` file in the root directory and add the necessary environment variables for the services:
 
@@ -94,7 +103,11 @@ DB_USER=your-db-user
 DB_PASSWORD=your-db-password
 ```
 
-**Step 2: Using Docker-Compose to start PostgreSQL, Redis, Elasticsearch, and Kafka in the background**
+**Step 3: Using Docker-Compose to start PostgreSQL, Redis, Elasticsearch, and Kafka in the background**
+
+```bash
+docker-compose up -d
+```
 
 - If you don’t want Docker compose, you must install and start each service manually:
 
@@ -102,15 +115,6 @@ DB_PASSWORD=your-db-password
   - **Redis** → Install & run on port 6379
   - **Elasticsearch** → Install & run on port 9200
   - **Kafka** → Install & run on port 9092
-
-**Step 3: Clone the Repository**
-
-Clone the repository from GitHub to your local machine and navigate into the project directory:
-
-```bash
-git clone https://github.com/chloenth/mycare-portal.git
-cd mycare-portal
-```
 
 **Step 4: Start Microservices One by One**
 Each microservice must be started separately.
